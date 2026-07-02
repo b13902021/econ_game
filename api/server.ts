@@ -193,7 +193,7 @@ app.post("/api/action/submit-ap", async (req, res) => {
     team.totalRestHours += rest;
     updateHappiness(team);
     updateVictory(team, false);
-updateRank(gameState);
+    updateRank(gameState);
 
 
     team.actionProgress = "AP_ALLOCATED";

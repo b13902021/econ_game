@@ -166,7 +166,7 @@ async function saveStateToDB() {
   await supabase.from("parasite_game").upsert({ id: 1, state: gameState, updated_at: new Date().toISOString() });
 }
 
-export async function withStateLock(req: any, res: any, action: () => Promise<void> | void) {
+export async function withStateLock(req: any, res: any, action: () => Promise<any> | any) {
   const release = await stateLock.acquire();
   try {
     await loadStateFromDB();
