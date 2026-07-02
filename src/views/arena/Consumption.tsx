@@ -85,8 +85,8 @@ export default function Consumption({ currentTeam, gameState, fetchGameState, se
             </div>
          </div>
          <div>
-            <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">累積額外消費水蜜桃</div>
-            <div className="text-2xl font-black tracking-tighter">{currentTeam.totalExtraPeaches + extraPeaches} 顆</div>
+            <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">預覽今日水蜜桃總消費</div>
+            <div className="text-2xl font-black tracking-tighter">{5 + extraPeaches} 顆</div>
          </div>
          <div>
             <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">預覽幸福指數</div>
@@ -102,7 +102,7 @@ export default function Consumption({ currentTeam, gameState, fetchGameState, se
         <div className="text-center md:text-left space-y-2">
           <div className="text-5xl font-black tracking-tighter">🍑 ${peachPrice}</div>
           <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-            {extraPeaches > 0 ? `額外購買: ${extraPeaches} 顆` : "僅維持基本生存消費"}
+            {extraPeaches > 0 ? `額外購買: ${extraPeaches} 顆` : "僅維持基本生存消費（5顆/天）"}
           </div>
         </div>
         <div className="flex gap-4">

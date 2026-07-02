@@ -138,9 +138,14 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
                  {/* (將)公開資訊卡片 */}
                  <div className="bg-white border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col">
                     <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-6">
-                       <h3 className="text-3xl font-black uppercase tracking-tighter">(將)公開資訊</h3>
-                       <span className="text-[10px] px-2 py-1 font-black uppercase tracking-widest bg-black text-white">Public Data</span>
-                    </div>
+                        {/* 用一個 div 把標題和說明包起來，它們就會在內部自然換行 */}
+                        <div>
+                           <h3 className="text-3xl font-black uppercase tracking-tighter">公開資訊</h3>
+                           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">相關資訊將在每日指定階段更新至公開帳本</p>
+                        </div>
+                        
+                        <span className="text-[10px] px-2 py-1 font-black uppercase tracking-widest bg-black text-white">Public Data</span>
+                     </div>
                     {/* 三欄均分配置 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
                        <div>
@@ -202,14 +207,10 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
                        <div>
                           <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest">當前職位時薪</div>
                           <div className="text-3xl font-black text-white">
-                             {(() => {
-                                if (currentTeam.realJob) {
-                                   const count = gameState.teams.filter(t => t.realJob === currentTeam.realJob).length || 1;
-                                   return `$${SALARY_TABLE[currentTeam.realJob]?.[Math.min(count - 1, 9)] || 0}`;
-                                }
-                                return "-";
+                             ${(() => {
+                                 return currentTeam.realJob ? currentTeam.wageRate : "-";
                              })()}
-                          </div>
+                          <span className="text-lg">/HRS</span></div>
                        </div>
                     </div>
                  </div>

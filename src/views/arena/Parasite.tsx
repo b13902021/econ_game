@@ -102,7 +102,7 @@ export default function Parasite({ currentTeam, gameState, fetchGameState, setMe
              <div className="text-2xl font-black tracking-tighter">${baseSalary}</div>
          </div>
          <div>
-             <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest animate-pulse">預估額外髒錢</div>
+             <div className="text-[10px] font-bold text-red-400 uppercase tracking-widest animate-pulse">髒錢總額</div>
              <div className={cn("text-2xl font-black tracking-tighter", greedAmount > 0 ? "text-red-400" : "text-white/30")}>
                 + ${greedAmount}
              </div>
@@ -114,7 +114,7 @@ export default function Parasite({ currentTeam, gameState, fetchGameState, setMe
              </div>
          </div>
          <div>
-             <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest">將公開勝利值</div>
+             <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest">人生勝利值</div>
              <div className="text-2xl font-black tracking-tighter">{derivedVictory.toFixed(0)}</div>
          </div>
       </div>

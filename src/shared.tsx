@@ -37,6 +37,7 @@ export interface GameState {
   bailoutPool: number; 
   teams: Team[]; 
   jobApplications: Record<string, string[]>;
+  peachPrice: number;
 }
 
 // 2. 常數設定

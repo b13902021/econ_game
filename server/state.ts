@@ -21,6 +21,7 @@ export interface Team {
   previousVictory: number;
   realJob: string | null;
   publicJob: string | null;
+  isDead: boolean;
 
   // 私有資訊
   cash: number;
@@ -37,7 +38,6 @@ export interface Team {
   greedAmount: number;
   reportedTargetId: string | null;
   reportResult: any | null; 
-  isDead: boolean;
 }
 
 export interface GameState {
@@ -46,6 +46,7 @@ export interface GameState {
   teams: Team[];
   bailoutPool: number;
   jobApplications: Record<string, string[]>;
+  peachPrice: number;
 }
 
 export const PEACH_PRICE_TABLE: Record<number, number> = {
@@ -73,15 +74,20 @@ export function getInitialState(): GameState {
     bailoutPool: 0, 
     teams: [], 
     jobApplications: {},
+    peachPrice: PEACH_PRICE_TABLE[1] || 120,
   };
 
+  // 1. 預先設定好 10 組不同的小隊密碼（可自行修改裡面的值）
+  const secretPins = ["AS1723", "JMK1883", "MF1912", "DR1772", "FH1899", "AM1842", "AS1933", "HG1839", "JES1943", "TRM1766"];
+
+  // 2. 初始化 10 支小隊的資料
   state.teams = Array.from({ length: 10 }, (_, i) => ({
     id: `team-${i + 1}`,
     name: `${i + 1}小隊`,
-    pin: `1234`,
+    pin: secretPins[i], // 根據索引值 i 依序取出對應的密碼
     cash: 0,
-    publicRank: 0,
-    previousRank: 0,
+    publicRank: 1,
+    previousRank: -1,
     realVictory: 0,
     publicVictory: 0,
     previousVictory: 0,
@@ -100,27 +106,7 @@ export function getInitialState(): GameState {
     reportResult: null,
     isDead: false
   }));
-
-  updatePublicRankings(state);
   return state;
-}
-
-export function updatePublicRankings(stateToUpdate: GameState) {
-  stateToUpdate.teams.forEach(t => {
-    updateHappiness(t);
-    updateVictory(t, false);
-  });
-
-  const sorted = [...stateToUpdate.teams].sort((a, b) => b.publicVictory - a.publicVictory);
-
-  let rank = 1;
-  sorted.forEach((team, index) => {
-    if (index > 0 && team.publicVictory < sorted[index - 1].publicVictory) rank = index + 1; 
-    
-    team.previousRank = team.publicRank === 0 ? rank : team.publicRank;
-    team.publicRank = rank;
-    team.publicJob = team.realJob;
-  });
 }
 
 // ==========================================
@@ -150,10 +136,28 @@ const stateLock = new AsyncLock();
 async function loadStateFromDB() {
   if (!supabase) return;
   const { data, error } = await supabase.from("parasite_game").select("state").eq("id", 1).maybeSingle();
+  const defaultState = getInitialState();
+
   if (data && data.state) {
-    gameState = data.state;
+    const persistedState = data.state as Partial<GameState> & { teams?: Team[] };
+    const mergedTeams = (persistedState.teams || []).map((team: Team) => {
+      const fallbackTeam = defaultState.teams.find(t => t.id === team.id) || defaultState.teams[0];
+      return {
+        ...fallbackTeam,
+        ...team,
+        id: team.id || fallbackTeam.id,
+        name: team.name || fallbackTeam.name,
+        pin: fallbackTeam.pin, // 現在它會精準抓到屬於自己小隊的秘密密碼了
+      };
+    });
+
+    gameState = {
+      ...defaultState,
+      ...persistedState,
+      teams: mergedTeams.length > 0 ? mergedTeams : defaultState.teams,
+    };
   } else if (!error) {
-    await supabase.from("parasite_game").upsert({ id: 1, state: gameState });
+    await supabase.from("parasite_game").upsert({ id: 1, state: defaultState });
   }
 }
 
@@ -185,7 +189,20 @@ export function updateHappiness(team: Team) {
 export function updateVictory(team: Team, announce: boolean) {
   team.realVictory = team.alpha * team.happiness * team.cash;
   if (announce) {
-    team.previousVictory = team.publicVictory;
     team.publicVictory = team.realVictory;
+  }
+}
+
+export function updateRank(stateToUpdate: GameState){
+  stateToUpdate.teams.sort((a, b) => {
+    if (a.isDead && !b.isDead) return 1;
+    if (!a.isDead && b.isDead) return -1;
+    return b.publicVictory - a.publicVictory;
+  })
+  for(let i = 0 ; i < stateToUpdate.teams.length; ++i){
+    if(i === 0 || stateToUpdate.teams[i].publicVictory < stateToUpdate.teams[i-1].publicVictory)
+        stateToUpdate.teams[i].publicRank = i+1;
+    else
+        stateToUpdate.teams[i].publicRank = stateToUpdate.teams[i-1].publicRank;
   }
 }

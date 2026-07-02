@@ -1,6 +1,6 @@
 // src/views/AdminPanel.tsx
 import { useState } from "react";
-import { GameState } from "../shared";
+import { GameState, Team, JOB_CONFIG } from "../shared";
 import { cn } from "../lib/utils";
 
 interface AdminPanelProps {
@@ -74,7 +74,25 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
 
   const nextPhase = getNextPhaseConfig();
 
-  
+  const getConsumptionLabel = (team: Team) => {
+    if (team.totalExtraPeaches > 0) {
+      return `${team.totalExtraPeaches} 顆`;
+    }
+    return "--";
+  };
+
+  const getReportLabel = (team: Team) => {
+    if (team.greedAmount > 0) {
+      return `$${team.greedAmount}`;
+    }
+    return "--";
+  };
+
+  const getJobLabel = (team: Team) => {
+    const jobCode = team.publicJob || team.realJob;
+    if (!jobCode) return "--";
+    return JOB_CONFIG[jobCode]?.name || jobCode;
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 p-4">
@@ -147,11 +165,11 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
                  <tr className="bg-slate-50 border-b-4 border-black text-xs uppercase tracking-widest">
                    <th className="p-4 font-black border-r-2 border-black">Team</th>
                    <th className="p-4 font-black border-r-2 border-black text-center">AP/勞動</th>
-                   <th className="p-4 font-black border-r-2 border-black text-center">浮報</th>
-                   <th className="p-4 font-black border-r-2 border-black text-center">消費</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">現金</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">累計額外消費</th>
                    <th className="p-4 font-black border-r-2 border-black text-center">檢舉</th>
-                   <th className="p-4 font-black border-r-2 border-black text-center">狀態</th>
-                   <th className="p-4 font-black text-right">現金</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">職業</th>
+                   <th className="p-4 font-black text-right">浮報</th>
                  </tr>
                </thead>
                <tbody>
@@ -161,8 +179,16 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
                        <td className="p-4 font-bold border-r-2 border-black">
                           {team.name} {team.isDead && "☠"}
                        </td>
-                       <td className="p-4 font-bold border-r-2 border-black text-center text-xs text-slate-500">{team.actionProgress}</td>
-                       <td className="p-4 font-black text-right">${team.cash}</td>
+                       <td className="p-4 font-bold border-r-2 border-black text-center text-xs text-slate-500">
+                         {team.actionProgress}
+                       </td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">${team.cash}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{getConsumptionLabel(team)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">
+                         {team.reportedTargetId ? team.reportedTargetId : "--"}
+                       </td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{getJobLabel(team)}</td>
+                       <td className="p-4 font-black text-right">{getReportLabel(team)}</td>
                      </tr>
                    );
                  })}

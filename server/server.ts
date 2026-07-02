@@ -1,16 +1,15 @@
 // server/server.ts
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import cookieParser from "cookie-parser";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import {
   gameState,
   withStateLock,
-  updatePublicRankings,
   updateHappiness,
   updateVictory,
+  updateRank,
   getInitialState,
   JOB_CONFIG,
   SALARY_TABLE,
@@ -24,6 +23,28 @@ const app = express();
 const PORT = 3000;
 app.use(express.json());
 app.use(cookieParser());
+
+const getCurrentPeachPrice = () => PEACH_PRICE_TABLE[gameState.currentDay] || 120;
+
+const recalculateWageRates = () => {
+  const jobCounts: Record<string, number> = {};
+
+  gameState.teams.forEach((team) => {
+    if (team.realJob) {
+      jobCounts[team.realJob] = (jobCounts[team.realJob] || 0) + 1;
+    }
+  });
+
+  gameState.teams.forEach((team) => {
+    if (!team.realJob) {
+      team.wageRate = 0;
+      return;
+    }
+
+    const count = jobCounts[team.realJob] || 1;
+    team.wageRate = SALARY_TABLE[team.realJob]?.[Math.min(count - 1, 9)] || 0;
+  });
+};
 
 // ==========================================
 // 1. 系統與登入
@@ -48,13 +69,16 @@ app.get("/api/game-state", async (req, res) => {
   withStateLock(req, res, () => {
     const { teamId, isAdmin } = req.query;
     
+    gameState.peachPrice = getCurrentPeachPrice();
+
     gameState.teams.forEach(t => {
       updateHappiness(t);
       updateVictory(t, false);
     });
+    updateRank(gameState);
 
     if (isAdmin === "true") {
-      res.json({ ...gameState });
+      res.json({ ...gameState, peachPrice: gameState.peachPrice });
       return;
     }
     
@@ -64,11 +88,11 @@ app.get("/api/game-state", async (req, res) => {
       return {
         id: t.id, name: t.name, 
         publicJob: t.publicJob, publicVictory: t.publicVictory,
-        currentRank: t.publicRank, previousRank: t.previousRank, previousVictory: t.previousVictory, 
-        alpha: t.alpha, realJob: t.realJob
-      } as any;
+        publicRank: t.publicRank, previousRank: t.previousRank, previousVictory: t.previousVictory, 
+        alpha: t.alpha, isDead: t.isDead
+      } as any; //其他小隊的資訊
     });
-    res.json({ ...gameState, teams: maskedTeams });
+    res.json({ ...gameState, peachPrice: gameState.peachPrice, teams: maskedTeams });
   });
 });
 
@@ -91,15 +115,16 @@ app.post("/api/action/apply-job", async (req, res) => {
       gameState.jobApplications[key] = gameState.jobApplications[key].filter(id => id !== teamId);
     });
 
-    if (jobId && jobId !== "NONE") {
+    team.realJob = jobId && jobId !== "NONE" ? jobId : null;
+
+    if (team.realJob) {
        // 💡 動態推導執照：檢查投入的 AP 是否大於等於門檻
-       const hasLicense = (team.licenseProgress[jobId] || 0) >= JOB_CONFIG[jobId].apCost;
+       const hasLicense = (team.licenseProgress[team.realJob] || 0) >= JOB_CONFIG[team.realJob].apCost;
        if (!hasLicense) return res.status(400).json({ error: "缺乏相關執照" });
        
-       if (!gameState.jobApplications[jobId]) gameState.jobApplications[jobId] = [];
-       gameState.jobApplications[jobId].push(teamId);
+       if (!gameState.jobApplications[team.realJob]) gameState.jobApplications[team.realJob] = [];
+       gameState.jobApplications[team.realJob].push(teamId);
     }
-
     team.actionProgress = "JOB_CONFIRMED";
     res.json({ success: true, team });
   });
@@ -126,6 +151,8 @@ app.post("/api/action/quit-job", async (req, res) => {
     team.totalRestHours -= 1;
     updateHappiness(team);
     updateVictory(team, false);
+    updateRank(gameState);
+
 
     team.actionProgress = "RESIGN_DECIDED";
     res.json({ success: true, team });
@@ -152,8 +179,6 @@ app.post("/api/action/submit-ap", async (req, res) => {
     team.cash += pizza * 150;
 
     if (team.realJob && work >= 8) {
-      const count = gameState.teams.filter(t => t.realJob === team.realJob).length || 1;
-      team.wageRate = SALARY_TABLE[team.realJob]?.[Math.min(count - 1, 9)] || 0;
       team.cash += work * team.wageRate;
       team.workHours = work;
     }
@@ -168,8 +193,10 @@ app.post("/api/action/submit-ap", async (req, res) => {
     team.totalRestHours += rest;
     updateHappiness(team);
     updateVictory(team, false);
+updateRank(gameState);
 
-    team.actionProgress = gameState.currentDay === 1 ? "PARASITE_DECIDED" : "AP_ALLOCATED";
+
+    team.actionProgress = "AP_ALLOCATED";
     res.json({ success: true, team });
   });
 });
@@ -196,14 +223,15 @@ app.post("/api/action/confirm-consumption", async (req, res) => {
     const { teamId, extraPeaches = 0 } = req.body;
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team) return res.status(404).json({ error: "小隊不存在" });
-    if (team.actionProgress !== "PARASITE_DECIDED") return res.status(400).json({ error: "請先完成前置決策" });
     
-    const currentPrice = PEACH_PRICE_TABLE[gameState.currentDay] || 120;
+    const currentPrice = getCurrentPeachPrice();
     team.cash -= (5 + extraPeaches) * currentPrice; 
     team.totalExtraPeaches += extraPeaches;
     
     updateHappiness(team);
-    updateVictory(team, false);
+    updateVictory(team, true);
+updateRank(gameState);
+
     
     team.actionProgress = "CONSUMPTION_DECIDED";
     res.json({ success: true, team });
@@ -242,6 +270,8 @@ app.post("/api/action/donate", async (req, res) => {
     team.cash -= amount;
     gameState.bailoutPool += amount;
     updateVictory(team, false);
+updateRank(gameState);
+
     res.json({ success: true, team });
   });
 });
@@ -263,9 +293,6 @@ app.post("/api/action/execute-slaughter", async (req, res) => {
     const victim = potentialVictims[randomIndex];
     victim.isDead = true;
 
-    // 更新排行榜 (讓死者壓到底)
-    updatePublicRankings(gameState);
-
     res.json({ success: true, victimName: victim.name });
   });
 });
@@ -277,14 +304,11 @@ app.post("/api/action/execute-slaughter", async (req, res) => {
 // 管理端：開啟AP分配市場 (對應你要求的 open-ap-market)
 app.post("/api/admin/open-ap-market", async (req, res) => {
   withStateLock(req, res, () => {
-    Object.entries(gameState.jobApplications).forEach(([jobId, applicants]) => {
-      applicants.forEach(tId => {
-        const team = gameState.teams.find(t => t.id === tId);
-        if (team) team.realJob = jobId;
-      });
+    recalculateWageRates();
+    gameState.teams.forEach((team) => {
+      team.publicJob = team.realJob;
     });
     gameState.phase = "EARN_AND_SPEND";
-    updatePublicRankings(gameState);
     res.json({ success: true, gameState });
   });
 });
@@ -348,6 +372,8 @@ app.post("/api/admin/resolve-report", async (req, res) => {
               }
           }
        }
+       updateVictory(team, true);
+updateRank(gameState);
 
        // 寫入 DB，讓前端明天能看到
        team.reportResult = { message1: passiveMsg, message2: activeMsg };
@@ -363,10 +389,6 @@ app.post("/api/admin/resolve-report", async (req, res) => {
 app.post("/api/admin/next-day", async (req, res) => {
   withStateLock(req, res, () => {
     if (gameState.currentDay >= 4) return res.status(400).json({ error: "遊戲已結束" });
-
-    const sortedForAlpha = [...gameState.teams].sort((a, b) => b.realVictory - a.realVictory);
-    sortedForAlpha.slice(0, 3).forEach(team => team.alpha += 0.1);
-
     gameState.teams.forEach(team => {
       team.workHours = 0;
       team.wageRate = 0;
@@ -377,13 +399,19 @@ app.post("/api/admin/next-day", async (req, res) => {
       team.reportResult = null;
       team.realJob = null;
       team.actionProgress = "BEGINNING";
+      if(team.publicRank <= 3) team.alpha += 0.1;
     });
 
     gameState.currentDay += 1;
     gameState.jobApplications = {};
     gameState.phase = "JOB_HUNTING";
 
-    updatePublicRankings(gameState);
+    gameState.teams.forEach(team => {
+      team.previousVictory = team.publicVictory;
+      team.previousRank = team.publicRank;
+      updateVictory(team, true);
+    });
+    updateRank(gameState);
     res.json({ success: true, gameState });
   });
 });
@@ -395,14 +423,10 @@ app.post("/api/admin/reset", async (req, res) => {
   });
 });
 
-if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
-  createViteServer({ server: { middlewareMode: true }, appType: "spa" }).then((vite) => app.use(vite.middlewares));
-} else {
-  const distPath = path.join(process.cwd(), "dist");
-  app.use(express.static(distPath));
-  app.get("*", (req, res) => res.sendFile(path.join(distPath, "index.html")));
-}
+// 把原本底下的 createViteServer 與 app.use(express.static(...)) 全都刪掉，換成這樣：
 
-if (!process.env.VERCEL) app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  app.listen(PORT, "0.0.0.0", () => console.log(`Server running on local port ${PORT}`));
+}
 
 export default app;

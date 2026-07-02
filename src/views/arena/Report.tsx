@@ -15,10 +15,10 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
   const hasSubmitted = currentTeam.reportedTargetId !== null;
 
   const handleSubmitReport = async (targetId: string | "NONE") => {
-    if (targetId !== "NONE" && !confirm("確定要實名檢舉該小隊嗎？\n\n警告：若對方並未浮報薪水，您將面臨嚴厲的「誣告罰款」！")) {
-        return;
-    }
-
+    if(targetId === "NONE")
+      if(!confirm("確定安分守己嗎")) return;
+    else
+      if(!confirm("確定檢舉該小隊嗎")) return;
     try {
       const res = await fetch("/api/action/report", {
         method: "POST",
@@ -75,7 +75,9 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
   }
 
   // 💡 修正幽靈目標：過濾掉自己，以及「已經死亡」的小隊
-  const otherTeams = gameState.teams.filter(t => t.id !== currentTeam.id && !t.isDead);
+  const otherTeams = gameState.teams.filter(t => {
+    return (t.id !== currentTeam.id) && (!currentTeam.realJob || t.publicJob === currentTeam.publicJob);
+  })
 
   return (
     <section className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8">
@@ -122,7 +124,7 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
              disabled={!selectedTargetId}
              className="flex-1 py-4 bg-purple-600 border-4 border-purple-800 text-white font-black text-lg uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none transition-all disabled:opacity-30 disabled:cursor-not-allowed"
          >
-            實名檢舉選定小隊
+            匿名檢舉選定小隊
          </button>
          <button 
              onClick={() => handleSubmitReport("NONE")} 

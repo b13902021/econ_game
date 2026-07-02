@@ -45,9 +45,8 @@ export default function ApAllocation({ currentTeam, gameState, fetchGameState, s
   }, [currentTeam.actionProgress, gameState.currentDay]);
 
   const pizzaEarn = localAp.pizza * 150;
-  const workRate = currentTeam.realJob ? (currentTeam.wageRate || 0) : 0; 
-  const workEarn = localAp.work >= 8 ? localAp.work * workRate : 0;
   
+  const workEarn = localAp.work * currentTeam.wageRate;
   const derivedCash = currentTeam.cash + pizzaEarn + workEarn;
   const derivedHappiness = Math.sqrt(currentTeam.totalExtraPeaches) + Math.sqrt(currentTeam.totalRestHours + localAp.rest);
   const derivedVictory = currentTeam.alpha * derivedHappiness * derivedCash;
@@ -121,7 +120,7 @@ export default function ApAllocation({ currentTeam, gameState, fetchGameState, s
   return (
     <section className={cn("border-4 p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8 bg-white", theme.border)}>
       <div className={cn("border-b-4 pb-4", theme.border)}>
-         <h3 className={cn("text-4xl font-black uppercase tracking-tighter", theme.text)}>AP Allocation</h3>
+         <h3 className={cn("text-4xl font-black uppercase tracking-tighter", theme.text)}>AP Allocation (16 AP)</h3>
          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">第一階段：分配您的行動點數 (共 16 點)</p>
       </div>
 
@@ -171,7 +170,7 @@ export default function ApAllocation({ currentTeam, gameState, fetchGameState, s
             <div onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, "pizza")} className="border-4 border-black p-4 bg-white flex flex-col hover:border-slate-500 transition-colors shadow-sm">
                <div className="flex justify-between items-start mb-4">
                   <div className="flex flex-col">
-                      <span className="font-black text-lg flex items-center gap-2"><img src={IMAGE_MAP.PIZZA} className="w-5 h-5"/>摺披薩盒</span>
+                      <span className="font-black text-lg flex items-center gap-2"><img src={IMAGE_MAP.PIZZA} className="w-5 h-5"/>摺披薩盒({localAp.pizza} AP)</span>
                       <span className="text-xs text-slate-400 font-bold mt-1">$150 / AP</span>
                   </div>
                   <div className="flex gap-1">
@@ -189,9 +188,9 @@ export default function ApAllocation({ currentTeam, gameState, fetchGameState, s
             <div onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, "work")} className={cn("border-4 p-4 bg-white flex flex-col transition-colors shadow-sm", currentTeam.realJob ? theme.border : "border-slate-300 opacity-50 bg-slate-50")}>
                <div className="flex justify-between items-start mb-4">
                   <div className="flex flex-col">
-                      <span className={cn("font-black text-lg", currentTeam.realJob ? theme.text : "text-slate-400")}>上班工作</span>
+                      <span className={cn("font-black text-lg", currentTeam.realJob ? theme.text : "text-slate-400")}>上班工作({localAp.work}AP)</span>
                       {currentTeam.realJob ? (
-                          <span className={cn("text-xs font-bold mt-1", theme.text)}>必須投入至少 8 AP | 時薪 ${workRate}</span>
+                          <span className={cn("text-xs font-bold mt-1", theme.text)}>必須投入至少 8 AP | 時薪 ${currentTeam.wageRate}</span>
                       ) : (
                           <span className="text-xs text-slate-400 mt-1">無正職資格，無法上班</span>
                       )}
