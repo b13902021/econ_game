@@ -1,0 +1,69 @@
+// src/shared.tsx
+import { cn } from "./lib/utils";
+
+// 1. 型別定義 (完全與後端對齊，徹底消滅幽靈參照)
+export interface Team {
+  id: string;
+  name: string;
+  pin: string;
+
+  publicRank: number;
+  previousRank: number;
+  realVictory: number;
+  publicVictory: number;
+  previousVictory: number;
+  realJob: string | null;
+  publicJob: string | null;
+
+  cash: number;
+  alpha: number;
+  happiness: number;
+  totalRestHours: number;
+  totalExtraPeaches: number;
+  wageRate: number; 
+
+  actionProgress:  "BEGINNING" | "JOB_CONFIRMED" | "AP_ALLOCATED" | "PARASITE_DECIDED" | "CONSUMPTION_DECIDED" | "REPORT_SUBMITTED" | "RESIGN_DECIDED" | "DONATE_SUMMITTED";
+  workHours: number;
+  licenseProgress: Record<string, number>;
+  greedAmount: number;
+  reportedTargetId: string | null;
+  reportResult: any | null; 
+  isDead: boolean; // 💡 新增的死亡標記
+}
+
+export interface GameState {
+  currentDay: number; 
+  phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER";
+  bailoutPool: number; 
+  teams: Team[]; 
+  jobApplications: Record<string, string[]>;
+}
+
+// 2. 常數設定
+export const JOB_CONFIG: Record<string, any> = {
+  GARDENER: { name: "園丁", apCost: 5, description: "親近大地，在繁茂的莊園中維持秩序。" },
+  BUTLER: { name: "管家", apCost: 6, description: "大宅的心臟，維持精英生活的體面與無暇。" },
+  DRIVER: { name: "司機", apCost: 8, description: "穿梭都市繁華，精英階層不可或缺的移動延伸。" },
+  TUTOR: { name: "家教", apCost: 10, description: "傳播知識，指導下一代的精英種子。" },
+};
+
+export const SALARY_TABLE: Record<string, number[]> = {
+  GARDENER: [190, 180, 160, 130, 100, 70, 70, 70, 70, 70],
+  BUTLER: [220, 200, 170, 130, 90, 50, 50, 50, 50, 50],
+  DRIVER: [260, 230, 190, 140, 90, 40, 40, 40, 40, 40],
+  TUTOR: [320, 270, 210, 140, 80, 20, 20, 20, 20, 20],
+};
+
+// 3. UI 對應與共用元件
+export const IMAGE_MAP: Record<string, string> = {
+  GARDENER: "/gardener.png", BUTLER: "/housekeeper.png", DRIVER: "/driver.png",
+  TUTOR: "/tutor.png", PIZZA: "/pizza.png", REST: "/sleep.png", SKILL: "/clock.png"
+};
+
+export const CustomIcon = ({ type, className = "w-8 h-8", draggable = false, onDragStart }: { type: string; className?: string; draggable?: boolean; onDragStart?: (e: React.DragEvent) => void }) => {
+  return (
+    <div draggable={draggable} onDragStart={onDragStart} className={cn("relative flex items-center justify-center select-none transition-transform", draggable ? "cursor-grab active:cursor-grabbing hover:scale-110" : "cursor-default", className)}>
+      <img src={IMAGE_MAP[type] || IMAGE_MAP.SKILL} alt={type} className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+    </div>
+  );
+};
