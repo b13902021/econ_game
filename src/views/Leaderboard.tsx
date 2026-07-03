@@ -44,6 +44,9 @@ export default function Leaderboard({ gameState }: LeaderboardProps) {
                 // 判斷是否為第一天 (-1)，若是則強制視同無變動
                 const isFirstDay = team.previousRank === -1;
                 const rankDiff = isFirstDay ? 0 : team.previousRank - team.publicRank;
+                const previousVictory = team.previousVictory || 0;
+                const publicVictory = Math.floor(team.publicVictory || 0);
+                const victoryDiff = isFirstDay ? 0 : publicVictory - Math.floor(previousVictory);
 
                 return (
                   <tr 
@@ -99,12 +102,22 @@ export default function Leaderboard({ gameState }: LeaderboardProps) {
                     </td>
 
                     <td className="p-6 text-right">
-                      <span className={cn(
-                        "text-3xl font-black tracking-tighter",
-                        idx === 0 && !team.isDead ? "text-amber-600" : (team.isDead ? "text-red-800 line-through" : "text-black")
-                      )}>
-                        {Math.floor(team.publicVictory || 0).toLocaleString()} 
-                      </span>
+                      <div className="flex items-end justify-end gap-3">
+                        <div className={cn(
+                          "text-3xl font-black tracking-tighter",
+                          idx === 0 && !team.isDead ? "text-amber-600" : (team.isDead ? "text-red-800 line-through" : "text-black")
+                        )}>
+                          {publicVictory.toLocaleString()}
+                        </div>
+                        <div className={cn(
+                          "text-sm font-bold",
+                          victoryDiff > 0 ? "text-green-600" : victoryDiff < 0 ? "text-red-600" : "text-zinc-400"
+                        )}>
+                          {victoryDiff > 0 && `▲ ${victoryDiff}`}
+                          {victoryDiff < 0 && `▼ ${Math.abs(victoryDiff)}`}
+                          {victoryDiff === 0 && "—"}
+                        </div>
+                      </div>
                       <span className="text-zinc-400 text-sm font-bold ml-1">pts</span>
                     </td>
                   </tr>

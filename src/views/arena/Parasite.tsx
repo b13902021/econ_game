@@ -20,8 +20,26 @@ const getTheme = (jobId: string | null) => {
   }
 };
 
+//*
+const getJobStory = (jobId: string | null) => {
+  switch (jobId) {
+    case "GARDENER":
+      return "你是一名在朴家工作的園丁。在朴家前院的花園裡，有一個裝滿園藝器具的老舊倉庫。工作一陣子後，你發現根本沒有其他人會經過這個倉庫，於是起了想賺外快的歹念。你可以選擇偷走值多少錢的器具拿去賣；可選擇 0 至你今日總薪水等值之間的任意數目，這些錢將私吞並成為資產的一部分；當然，也須承擔被檢舉的風險。";
+    case "BUTLER":
+      return "你是一名在朴家工作的管家。每天朴先生都會發給你固定的買菜錢。然而，你發現朴先生因工作忙碌好像不太關心物價，總是塞給你超出買菜所需的金額，也不看收據。今天買菜前你又拿到一大疊鈔票，你開始思考是否可以拿走一些作為自己的買菜錢；可選擇 0 至你今日總薪水等值之間的任意數目，並承擔被檢舉的風險。";
+    case "TUTOR":
+      return "你是一名在朴家工作的家教，朴先生的高中生孩子在學校過著充滿課業與人際壓力的生活，年齡相仿的你是他生活中唯一可以依靠的大哥哥/大姊姊，於是他總是找你訴苦。有次你幫他解題時，他牽起你的手說喜歡你。面對突如其來的告白，你雖然對他沒有感覺，卻開始覬覦起他所擁有的豪華物質生活。你可以讓他送禮物來表達心意，並偷偷賣掉禮物當作外快；禮物價格由你決定，可選擇 0 至你今日總薪水等值之間的任意數目，並承擔被檢舉的風險。";
+    case "DRIVER":
+      return "你是一名在朴家工作的司機。作為一個沒有安全感的有錢人，朴老闆要求你每次工作開始前都要先把車子的油加滿，但你報帳幾次後發現老闆好像沒有在看收據，完全相信你講的油錢價格。今天你又去加油了，你要選擇比實際價格多報多少油錢呢？可選擇 0 至你今日總薪水等值之間的任意數目，這些錢將私吞並成為資產的一部分；當然，也須承擔被其他朴家工人檢舉的風險。";
+    default:
+      return "這是一個讓你衡量貪婪與風險的階段。你可以選擇浮報金額，獲得額外現金，但也會承擔被檢舉的風險。";
+  }
+};
+
 export default function Parasite({ currentTeam, gameState, fetchGameState, setMessage }: ParasiteProps) {
   const theme = getTheme(currentTeam.realJob);
+  //*
+  const story = getJobStory(currentTeam.realJob);
   const [multiplier, setMultiplier] = useState(0.0);
   
   const hasRealJob = currentTeam.realJob !== null;
@@ -94,6 +112,18 @@ export default function Parasite({ currentTeam, gameState, fetchGameState, setMe
       <div className={cn("border-b-4 pb-4", theme.border)}>
          <h3 className={cn("text-4xl font-black uppercase tracking-tighter", theme.text)}>Underground</h3>
          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">第二階段：浮報薪水決策</p>
+      </div>
+      
+      //*
+      <div className={cn("rounded-3xl border-4 p-6 shadow-inner", theme.light, theme.border)}>
+         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+           <div>
+             <p className="text-xs uppercase tracking-[0.35em] text-slate-500">寄生情境</p>
+             <h4 className={cn("mt-2 text-2xl font-black tracking-tight", theme.text)}>{currentTeam.realJob ? currentTeam.realJob : "職業劇情"}</h4>
+           </div>
+           <span className="rounded-full bg-white/80 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm">{currentTeam.realJob ? currentTeam.realJob : "一般"}</span>
+         </div>
+         <p className="mt-4 text-sm leading-7 text-slate-700">{story}</p>
       </div>
 
       <div className={cn("border-4 p-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-white", theme.dark, theme.borderDark)}>

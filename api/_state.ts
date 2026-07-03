@@ -1,6 +1,7 @@
 // server/state.ts
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import WebSocket from "ws"; // 💡 加回來！本地端需要它
 
 dotenv.config();
 
@@ -113,7 +114,14 @@ export function getInitialState(): GameState {
 // ==========================================
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_KEY || "";
-const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false // 告訴 Supabase 這是伺服器環境，不要煩惱登入狀態
+  },
+  realtime: {
+    transport: WebSocket as any // 💡 終極殺招：用 as any 叫 TypeScript 閉嘴，強行把 ws 餵進去！
+  }
+}) : null;
 
 export let gameState = getInitialState();
 

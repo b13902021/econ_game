@@ -15,7 +15,7 @@ import {
   SALARY_TABLE,
   PEACH_PRICE_TABLE,
   Team
-} from "./state";
+} from "./_state.js";
 
 dotenv.config();
 
