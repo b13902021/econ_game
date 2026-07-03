@@ -1,7 +1,6 @@
 // server/state.ts
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import WebSocket from "ws";
 
 dotenv.config();
 
@@ -114,10 +113,7 @@ export function getInitialState(): GameState {
 // ==========================================
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_KEY || "";
-const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey, {
-  global: { WebSocket: WebSocket },
-  realtime: { transport: WebSocket }
-}) : null;
+const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 export let gameState = getInitialState();
 
@@ -173,6 +169,7 @@ export async function withStateLock(req: any, res: any, action: () => Promise<an
     await action();
     await saveStateToDB();
   } catch (error: any) {
+    console.error(`🔥 [API 錯誤] 路徑: ${req.path} | 錯誤內容:`, error);
     res.status(500).json({ error: "伺服器處理錯誤" });
   } finally {
     release();
