@@ -19,7 +19,7 @@ export default function Leaderboard({ gameState }: LeaderboardProps) {
           The Ledger
         </h1>
         <p className="text-zinc-400 mt-4 text-sm md:text-base font-bold tracking-widest uppercase relative z-10">
-          Day {gameState.currentDay} | Public Records & Asset Evaluation
+          Day {gameState.currentDay} | 人生勝利值 = alpha * 幸福指數 * 現金
         </p>
       </div>
 

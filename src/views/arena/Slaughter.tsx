@@ -61,6 +61,14 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
       </div>
 
       <div className="bg-black text-white p-8 border-4 border-black space-y-8">
+
+          {currentTeam.reportResult && (
+             <div className="bg-white text-black border-4 border-yellow-500 p-6 space-y-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <div className="text-[20px] font-black uppercase tracking-widest text-yellow-600">檢舉結果</div>
+                <div className="text-[20px] font-black uppercase tracking-tight">{currentTeam.reportResult.message1}</div>
+                <div className="text-[20px] font-black uppercase tracking-tight">{currentTeam.reportResult.message2}</div>
+             </div>
+          )}
           
           {/* 金庫資訊顯示區塊：根據 isLastPlace 判斷要顯示什麼 */}
           <div className="text-center space-y-2">

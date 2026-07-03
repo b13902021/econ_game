@@ -78,7 +78,7 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
 
   // 💡 修正幽靈目標：過濾掉自己，以及「已經死亡」的小隊
   const otherTeams = gameState.teams.filter(t => {
-    return (t.id !== currentTeam.id) && (t.realJob) && (!currentTeam.realJob || t.publicJob === currentTeam.publicJob);
+    return (t.id !== currentTeam.id) && (t.publicJob) && (!currentTeam.realJob || t.publicJob === currentTeam.publicJob);
   })
 
   return (

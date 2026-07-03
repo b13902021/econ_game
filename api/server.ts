@@ -369,7 +369,7 @@ app.post("/api/admin/resolve-report", async (req, res) => {
               team.cash += claim;
               passiveMsg = `您無辜被檢舉，清白得以證明！獲得誣告者賠償共 $${claim}。`;
           } else {
-              passiveMsg = `安分守己，平安度過一日。`;
+              passiveMsg = `您是沒有浮報的誠信員工，而大家也這麼認為。`;
           }
        }
 
@@ -387,6 +387,9 @@ app.post("/api/admin/resolve-report", async (req, res) => {
                   activeMsg = `你誣告了 ${targetTeam.name}，必須支付賠償金 $${damages}！`;
               }
           }
+       }
+       else{
+        activeMsg = "您沒有檢舉任何人，與世無爭";
        }
        updateVictory(team, true);
         updateRank(gameState);
