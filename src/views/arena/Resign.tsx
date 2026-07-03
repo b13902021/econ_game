@@ -1,6 +1,6 @@
 // src/views/arena/Resign.tsx
 import { useState } from "react";
-import { Team, GameState, JOB_CONFIG, IMAGE_MAP } from "../../shared";
+import { Team, GameState, JOB_CONFIG, JOB_COLORS, IMAGE_MAP } from "../../shared";
 import { cn } from "../../lib/utils";
 
 interface ResignProps {
@@ -13,7 +13,7 @@ interface ResignProps {
 export default function Resign({ currentTeam, gameState, fetchGameState, setMessage }: ResignProps) {
   const canResign = currentTeam.todayRest > 0;
 
-  const handleResign = async (isToQuit) => {
+  const handleResign = async (isToQuit: boolean) => {
    
     if (!canResign && isToQuit) {
         setMessage({ text: "休息時數不足 (需要 1 單位)，無法辦理辭職交接手續！", type: "error" });
@@ -94,20 +94,24 @@ export default function Resign({ currentTeam, gameState, fetchGameState, setMess
          <div className="space-y-8">
             {currentTeam.realJob ? (
                <>
-                  <div className="bg-blue-50 border-4 border-blue-200 p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-                     <div className="flex items-center gap-8">
-                        <img src={IMAGE_MAP[currentTeam.realJob]} alt="job" className="w-24 h-24 object-contain drop-shadow-md" />
-                        <div>
-                           <div className="text-sm font-black uppercase tracking-widest text-blue-500 mb-1">Current Position / 當前職位</div>
-                           <div className="text-5xl font-black uppercase text-blue-900">{JOB_CONFIG[currentTeam.realJob]?.name}</div>
-                           <div className="text-xl font-bold text-blue-700 mt-3 bg-blue-100 inline-block px-4 py-1">
-                              今日休息時數: {currentTeam.todayRest} HRS
+                  {(() => {
+                     const colors = JOB_COLORS[currentTeam.realJob] || JOB_COLORS.GARDENER;
+                     return (
+                        <div className={cn("border-4 p-8 flex flex-col md:flex-row items-center justify-between gap-8", colors.bg, colors.border)}>
+                           <div className="flex items-center gap-8">
+                              <img src={IMAGE_MAP[currentTeam.realJob]} alt="job" className="w-24 h-24 object-contain drop-shadow-md" />
+                              <div>
+                                 <div className={cn("text-sm font-black uppercase tracking-widest mb-1", colors.label)}>Current Position / 當前職位</div>
+                                 <div className={cn("text-5xl font-black uppercase", colors.text)}>{JOB_CONFIG[currentTeam.realJob]?.name} / {JOB_CONFIG[currentTeam.realJob]?.enName}</div>
+                                 <div className={cn("text-xl font-bold mt-3 inline-block px-4 py-1", colors.bg, colors.text, "bg-opacity-70")}>
+                                    今日休息時數: {currentTeam.todayRest} HRS
+                                 </div>
+                              </div>
                            </div>
                         </div>
-                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                     );
+                  })()}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                      <button 
                         onClick={() => handleResign(false)}
                         className="w-full py-8 bg-black text-white font-black text-2xl uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"

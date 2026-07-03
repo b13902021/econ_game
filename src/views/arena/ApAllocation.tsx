@@ -119,41 +119,21 @@ export default function ApAllocation({ currentTeam, gameState, fetchGameState, s
 
   return (
     <section className={cn("border-4 p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8 bg-white", theme.border)}>
-      <div className={cn("border-b-4 pb-4", theme.border)}>
-         <h3 className={cn("text-4xl font-black uppercase tracking-tighter", theme.text)}>AP Allocation (16 AP)</h3>
-         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">第一階段：分配您的行動點數 (共 16 點)</p>
+      <div className={cn("border-b-4 pb-4 flex items-end justify-between", theme.border)}>
+         <div>
+            <h3 className={cn("text-4xl font-black uppercase tracking-tighter", theme.text)}>AP Allocation (16 AP)</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">第一階段：分配您的行動點數 (共 16 點)</p>
+         </div>
+         <div className="text-right">
+            <div className={cn("text-[10px] font-bold uppercase tracking-widest mb-1", theme.text)}>
+               結算後現金
+            </div>
+            <div className={cn("text-3xl font-black tracking-tighter", theme.text)}>
+               ${derivedCash}
+            </div>
+         </div>
       </div>
 
-      {/* 預覽資訊面板 */}
-      <div className={cn("border-4 p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-center", theme.light, theme.border)}>
-         <div>
-             <div className={cn("text-[10px] font-bold uppercase tracking-widest mb-1", theme.text)}>
-                結算後現金
-             </div>
-             <div className={cn("text-3xl font-black tracking-tighter", theme.text)}>
-                ${derivedCash}
-             </div>
-         </div>
-         
-         <div>
-             <div className={cn("text-[10px] font-bold uppercase tracking-widest mb-1", theme.text)}>
-                預覽幸福指數
-             </div>
-             <div className={cn("text-3xl font-black tracking-tighter", theme.text)}>
-                {derivedHappiness.toFixed(2)}
-             </div>
-         </div>
-         
-         <div>
-             <div className={cn("text-[10px] font-bold uppercase tracking-widest mb-1", theme.text)}>
-                預覽人生勝利值
-             </div>
-             <div className={cn("text-3xl font-black tracking-tighter", theme.text)}>
-                {derivedVictory.toFixed(0)}
-             </div>
-         </div>
-      </div>
-      
       <div className="space-y-6">
          <div onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, "rest")} className={cn("border-4 p-4 shadow-sm", theme.light, theme.border)}>
             <div className="flex justify-between items-center mb-3">
@@ -188,7 +168,7 @@ export default function ApAllocation({ currentTeam, gameState, fetchGameState, s
             <div onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, "work")} className={cn("border-4 p-4 bg-white flex flex-col transition-colors shadow-sm", currentTeam.realJob ? theme.border : "border-slate-300 opacity-50 bg-slate-50")}>
                <div className="flex justify-between items-start mb-4">
                   <div className="flex flex-col">
-                      <span className={cn("font-black text-lg", currentTeam.realJob ? theme.text : "text-slate-400")}>上班工作({localAp.work}AP)</span>
+                      <span className={cn("font-black text-lg", currentTeam.realJob ? theme.text : "text-slate-400")}>上班工作({localAp.work} AP)</span>
                       {currentTeam.realJob ? (
                           <span className={cn("text-xs font-bold mt-1", theme.text)}>必須投入至少 8 AP | 時薪 ${currentTeam.wageRate}</span>
                       ) : (

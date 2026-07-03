@@ -1,5 +1,5 @@
 // src/views/arena/Parasite.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "../../lib/utils";
 import { Team, GameState } from "../../shared";
 
@@ -41,6 +41,10 @@ export default function Parasite({ currentTeam, gameState, fetchGameState, setMe
   const [multiplier, setMultiplier] = useState(0.0);
   
   const hasRealJob = currentTeam.realJob !== null;
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   // 1. 底薪只算正職
   const baseSalary = hasRealJob ? (currentTeam.workHours * currentTeam.wageRate) : 0;
@@ -135,10 +139,8 @@ export default function Parasite({ currentTeam, gameState, fetchGameState, setMe
              </div>
          </div>
          <div>
-             <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest">目前幸福指數</div>
-             <div className="text-2xl font-black tracking-tighter text-white/80">
-                {derivedHappiness.toFixed(2)}
-             </div>
+           <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest">目前總現金</div>
+           <div className="text-2xl font-black tracking-tighter">${derivedCash}</div>
          </div>
          <div>
              <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest">人生勝利值</div>

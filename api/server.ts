@@ -97,35 +97,64 @@ app.get("/api/game-state", async (req, res) => {
 });
 
 // ==========================================
+// 小隊改名 (僅限一次)
+// ==========================================
+app.post("/api/action/rename", async (req, res) => {
+  withStateLock(req, res, () => {
+    const { teamId, newName } = req.body;
+    const team = gameState.teams.find(t => t.id === teamId);
+
+    if (!team) return res.status(404).json({ error: "小隊不存在" });
+    if (team.isRenamed) return res.status(400).json({ error: "您已經更改過隊名，無法再次修改" });
+    
+    // 基本防呆驗證
+    if (!newName || newName.trim() === "") return res.status(400).json({ error: "隊名不能為空" });
+    if (newName.length > 15) return res.status(400).json({ error: "隊名太長了，請保持在 15 字以內" });
+
+    // 更新名稱並鎖定改名權限
+    team.name = newName.trim();
+    team.isRenamed = true;
+
+    res.json({ success: true, team });
+  });
+});
+
+// ==========================================
 // 2. 玩家行動 API (依狀態機順序)
 // ==========================================
 
 // 應徵工作 (合併 apply 與 confirm)
 app.post("/api/action/apply-job", async (req, res) => {
   withStateLock(req, res, () => {
-    const { teamId, jobId } = req.body;
+    const { teamId, jobId } = req.body; // jobId 現在只會是 "GARDENER" 等字串，或是 null
     const team = gameState.teams.find(t => t.id === teamId);
     
     if (!team) return res.status(404).json({ error: "小隊不存在" });
     if (gameState.phase !== "JOB_HUNTING") return res.status(400).json({ error: "職業市場已關閉" });
     if (team.actionProgress !== "BEGINNING") return res.status(400).json({ error: "您已確認過應徵志願" });
     
-    // 清除舊紀錄
+    // 如果 jobId 不是 null，代表他要應徵新職位，執行執照檢查並更新
+    if (jobId !== null) {
+       const hasLicense = (team.licenseProgress[jobId] || 0) >= JOB_CONFIG[jobId].apCost;
+       if (!hasLicense) return res.status(400).json({ error: "缺乏相關執照" });
+       
+       team.realJob = jobId;
+    }
+    // 若 jobId 為 null，代表他選擇「放棄求職」或「確認當前職位」，team.realJob 保持不變
+
+    // --- 同步申請名單 (重要：確保計薪邏輯正確) ---
+    // 1. 先清除該小隊在所有名單中的舊紀錄
     Object.keys(gameState.jobApplications).forEach(key => {
       gameState.jobApplications[key] = gameState.jobApplications[key].filter(id => id !== teamId);
     });
 
-    team.realJob = jobId && jobId !== "NONE" ? jobId : null;
-
+    // 2. 如果他最終有工作 (不管是新應徵的還是舊的)，都放進工作名單中
     if (team.realJob) {
-       // 💡 動態推導執照：檢查投入的 AP 是否大於等於門檻
-       const hasLicense = (team.licenseProgress[team.realJob] || 0) >= JOB_CONFIG[team.realJob].apCost;
-       if (!hasLicense) return res.status(400).json({ error: "缺乏相關執照" });
-       
        if (!gameState.jobApplications[team.realJob]) gameState.jobApplications[team.realJob] = [];
        gameState.jobApplications[team.realJob].push(teamId);
     }
-    team.actionProgress = "JOB_CONFIRMED";
+
+    team.actionProgress = "JOBed";
     res.json({ success: true, team });
   });
 });
@@ -136,16 +165,15 @@ app.post("/api/action/resign", async (req, res) => {
     const { teamId, isToQuit } = req.body;
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team) return res.status(404).json({ error: "小隊不存在" });
-    
-    if (team.todayRest <= 0) return res.status(400).json({ error: "今日休息時數不足，無法辭職" });
 
     if (isToQuit){
+      if(team.todayRest <= 0) return res.status(400).json({ error: "今日休息時數不足，無法辭職" });
       team.realJob = null;
       team.totalRestHours -= 1;
       updateHappiness(team);
       updateVictory(team, false);
     }
-    team.actionProgress = "RESIGN_DECIDED";
+    team.actionProgress = "RESIGNED";
     res.json({ success: true, team });
   });
 });
@@ -157,7 +185,7 @@ app.post("/api/action/submit-ap", async (req, res) => {
     const team = gameState.teams.find(t => t.id === teamId);
     
     if (!team) return res.status(404).json({ error: "小隊不存在" });
-    if (team.actionProgress !== "BEGINNING" && team.actionProgress !== "JOB_CONFIRMED") {
+    if (team.actionProgress !== "BEGINNING" && team.actionProgress !== "JOBed") {
         return res.status(400).json({ error: "AP分配已鎖定" });
     }
 
@@ -186,7 +214,7 @@ app.post("/api/action/submit-ap", async (req, res) => {
     updateRank(gameState);
 
 
-    team.actionProgress = "AP_ALLOCATED";
+    team.actionProgress = "APed";
     res.json({ success: true, team });
   });
 });
@@ -197,12 +225,12 @@ app.post("/api/action/parasite", async (req, res) => {
     const { teamId, multiplier } = req.body;
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team) return res.status(404).json({ error: "小隊不存在" });
-    if (team.actionProgress !== "AP_ALLOCATED") return res.status(400).json({ error: "尚未完成AP分配" });
+    if (team.actionProgress !== "APed") return res.status(400).json({ error: "尚未完成AP分配" });
 
     const baseSalary = team.realJob ? (team.workHours * team.wageRate) : 0;
     team.greedAmount = Math.round(baseSalary * multiplier);
     
-    team.actionProgress = "PARASITE_DECIDED";
+    team.actionProgress = "PARASITED";
     res.json({ success: true, team });
   });
 });
@@ -223,7 +251,7 @@ app.post("/api/action/confirm-consumption", async (req, res) => {
 updateRank(gameState);
 
     
-    team.actionProgress = "CONSUMPTION_DECIDED";
+    team.actionProgress = "CONSUMED";
     res.json({ success: true, team });
   });
 });
@@ -235,7 +263,6 @@ app.post("/api/action/report", async (req, res) => {
     const team = gameState.teams.find(t => t.id === teamId);
     
     if (!team) return res.status(404).json({ error: "小隊不存在" });
-    if (team.actionProgress !== "CONSUMPTION_DECIDED") return res.status(400).json({ error: "決策順序錯誤" });
     if (teamId === targetId) return res.status(400).json({ error: "不能檢舉自己" });
     
     if (targetId && targetId !== "NONE") {
@@ -246,7 +273,7 @@ app.post("/api/action/report", async (req, res) => {
     }
     
     team.reportedTargetId = targetId;
-    team.actionProgress = "REPORT_SUBMITTED";
+    team.actionProgress = "REPORTED";
     res.json({ success: true, message: `檢舉決策已鎖定！` });
   });
 });
@@ -258,9 +285,10 @@ app.post("/api/action/donate", async (req, res) => {
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team || team.cash < amount) return res.status(400).json({ error: "現金不足" });
     team.cash -= amount;
+    team.slaughterDonation = (team.slaughterDonation || 0) + amount;
     gameState.bailoutPool += amount;
     updateVictory(team, false);
-    team.actionProgress = "DONATE_SUMMITTED";
+    team.actionProgress = "DONATED";
     res.json({ success: true, team });
   });
 });
@@ -274,10 +302,14 @@ app.post("/api/admin/execute-slaughter", async (req, res) => {
       const potentialVictims = gameState.teams.filter(t => t.publicRank !== lastPlaceRank);
       const victim = potentialVictims[Math.floor(Math.random() * potentialVictims.length)];
       victim.isDead = true;
+      res.json({ success: true, victimName: victim.name });
+    }
+    else{
+      res.json({ success: true, victimName: null });
     }
     gameState.teams.forEach(team => updateVictory(team, true));
     updateRank(gameState);
-    res.json({ success: true, victimName: victim.name });
+    gameState.phase = "ENDING";
   });
 });
 
@@ -368,7 +400,7 @@ app.post("/api/admin/resolve-report", async (req, res) => {
       gameState.phase = "SLAUGHTER";
       const lastPlaceRank = gameState.teams.at(-1)?.publicRank;
       const lastPlaceCount = gameState.teams.filter(t => t.publicRank === lastPlaceRank).length;
-      gameState.bailoutRequirement = 1000 + 500 * lastPlaceCount;
+      gameState.bailoutRequirement = 500 + 500 * lastPlaceCount;
     }
     res.json({ success: true, phase: gameState.phase });
   });
@@ -383,11 +415,11 @@ app.post("/api/admin/next-day", async (req, res) => {
       team.workHours = 0;
       team.wageRate = 0;
       team.greedAmount = 0;
+      team.slaughterDonation = 0;
       team.reportedTargetId = null;
       
       // 💡 換日時清空報告，確保前端不會永遠被卡住
       team.reportResult = null;
-      team.realJob = null;
       team.actionProgress = "BEGINNING";
       if(team.publicRank <= 3) team.alpha += 0.1;
     });

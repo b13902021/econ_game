@@ -37,7 +37,7 @@ export default function Ending({ currentTeam, gameState }: EndingProps) {
   } else {
     // 結局 C：屠殺發動，你被淘汰 (死了)
     statusTitle = "ELIMINATED / 淘汰";
-    message = "最後一名鐵了心，而命運的刀口落在了你的心臟上";
+    message = "最後一名鐵了心，而命運的刀口落在了你的心臟";
     containerTheme = "bg-red-950 border-red-600 text-red-500 shadow-[16px_16px_0px_0px_rgba(220,38,38,0.2)]";
     rankTheme = "text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]";
   }
@@ -69,8 +69,8 @@ export default function Ending({ currentTeam, gameState }: EndingProps) {
             Final Rank / 最終階級名次
           </div>
           
-          <div className={cn("text-8xl md:text-[12rem] font-black tracking-tighter leading-none py-4", rankTheme)}>
-            #{currentTeam.publicRank}
+          <div className={cn("font-black tracking-tighter leading-none py-4", rankTheme, isDead ? "text-8xl md:text-[12rem]" : "text-8xl md:text-[12rem]") }>
+            {isDead ? "☠" : `#${currentTeam.publicRank}`}
           </div>
           
           <div className="text-2xl font-bold uppercase tracking-[0.2em] opacity-80 mt-4">

@@ -11,6 +11,7 @@ dotenv.config();
 export interface Team {
   id: string;
   name: string; //
+  isRenamed: boolean;
   pin: string;
 
   // 排名資訊
@@ -30,20 +31,21 @@ export interface Team {
   totalRestHours: number; //
   totalExtraPeaches: number; //
   wageRate: number; //
+  slaughterDonation: number; //
 
   // 決策與進度
-  actionProgress: "BEGINNING" | "JOB_CONFIRMED" | "AP_ALLOCATED" | "PARASITE_DECIDED" | "CONSUMPTION_DECIDED" | "REPORT_SUBMITTED" | "RESIGN_DECIDED" | "DONATE_SUMMITTED"; //
+  actionProgress: "BEGINNING" | "JOBed" | "APed" | "PARASITED" | "CONSUMED" | "REPORTED" | "RESIGNED" | "DONATED"; //
   todayRest: number; //
   workHours: number;
   licenseProgress: Record<string, number>;
   greedAmount: number; //
   reportedTargetId: string | null; //
-  reportResult: any | null; 
+  reportResult: any | null;
 }
 
 export interface GameState {
   currentDay: number; 
-  phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER"; 
+  phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER" | "ENDING"; 
   teams: Team[];
   bailoutPool: number;
   bailoutRequirement: number;
@@ -87,6 +89,7 @@ export function getInitialState(): GameState {
   state.teams = Array.from({ length: 10 }, (_, i) => ({
     id: `team-${i + 1}`,
     name: `${i + 1}小隊`,
+    isRenamed: false,
     pin: secretPins[i], // 根據索引值 i 依序取出對應的密碼
     cash: 0,
     publicRank: 1,
@@ -101,6 +104,7 @@ export function getInitialState(): GameState {
     totalRestHours: 0,
     totalExtraPeaches: 0,
     wageRate: 0,
+    slaughterDonation: 0,
     actionProgress: "BEGINNING",
     todayRest: 0,
     workHours: 0,

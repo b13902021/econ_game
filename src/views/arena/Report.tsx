@@ -109,7 +109,6 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
                      : "border-slate-300 bg-white hover:border-purple-300 hover:bg-slate-50"
                )}
             >
-               <span className="block text-xs font-bold text-slate-500 mb-1">TEAM ID: {team.id.substring(0,4)}</span>
                <span className={cn("block text-xl font-black", selectedTargetId === team.id ? "text-purple-700" : "text-black")}>
                    {team.name}
                </span>

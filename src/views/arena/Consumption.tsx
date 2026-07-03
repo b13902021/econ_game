@@ -71,32 +71,34 @@ export default function Consumption({ currentTeam, gameState, fetchGameState, se
 
   return (
     <section className="bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8">
-      <div className="border-b-4 border-black pb-4">
+      <div className="border-b-4 border-black pb-4 flex items-end justify-between">
+      <div>
         <h3 className="text-4xl font-black uppercase tracking-tighter text-pink-500">Consumption</h3>
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">第三階段：水蜜桃消費</p>
       </div>
       
-      {/* 預覽資訊面板 */}
-      <div className="bg-pink-50 border-4 border-pink-200 p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-         <div>
-            <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">結算後現金</div>
-            <div className={cn("text-2xl font-black tracking-tighter", derivedCash < 0 ? "text-red-600" : "text-black")}>
-               ${derivedCash.toFixed(0)}
-            </div>
-         </div>
-         <div>
-            <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">預覽今日水蜜桃總消費</div>
-            <div className="text-2xl font-black tracking-tighter">{5 + extraPeaches} 顆</div>
-         </div>
-         <div>
-            <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">預覽幸福指數</div>
-            <div className="text-2xl font-black tracking-tighter text-pink-600">{derivedHappiness.toFixed(2)}</div>
-         </div>
-         <div>
-            <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">預覽人生勝利值</div>
-            <div className="text-2xl font-black tracking-tighter">{derivedVictory.toFixed(0)}</div>
-         </div>
+      {/* 修改這裡：加上 flex 並排、底部對齊(items-end)、以及間距(gap-8) */}
+      <div className="flex items-end gap-6 text-right">
+        
+        {/* 1. 先放：預覽今日水蜜桃總消費 */}
+        <div>
+          <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">預覽今日水蜜桃總消費</div>
+          <div className="text-2xl font-black tracking-tighter">{5 + extraPeaches} 顆</div>
+        </div>
+
+        {/* 在這裡加入斜線分隔符號 */}
+        <div className="text-3xl font-light text-slate-300 mb-0.5">/</div>
+
+        {/* 2. 後放：結算後現金 (已移除原本多餘的 mt-2) */}
+        <div>
+          <div className="text-[10px] font-bold text-pink-400 uppercase tracking-widest">結算後現金</div>
+          <div className={cn("text-2xl font-black tracking-tighter", derivedCash < 0 ? "text-red-600" : "text-black")}>
+            ${derivedCash.toFixed(0)}
+          </div>
+        </div>
+        
       </div>
+</div>
 
       <div className="flex flex-col md:flex-row items-center justify-between gap-8 bg-slate-50 p-8 border-4 border-dashed border-slate-300">
         <div className="text-center md:text-left space-y-2">

@@ -5,6 +5,7 @@ import { cn } from "./lib/utils";
 export interface Team {
   id: string;
   name: string;
+  isRenamed: boolean;
   pin: string;
 
   publicRank: number;
@@ -21,8 +22,9 @@ export interface Team {
   totalRestHours: number;
   totalExtraPeaches: number;
   wageRate: number; 
+  slaughterDonation: number;
 
-  actionProgress:  "BEGINNING" | "JOB_CONFIRMED" | "AP_ALLOCATED" | "PARASITE_DECIDED" | "CONSUMPTION_DECIDED" | "REPORT_SUBMITTED" | "RESIGN_DECIDED" | "DONATE_SUMMITTED";
+  actionProgress:  "BEGINNING" | "JOBed" | "APed" | "PARASITED" | "CONSUMED" | "REPORTED" | "RESIGNED" | "DONATED";
   todayRest: number;
   workHours: number;
   licenseProgress: Record<string, number>;
@@ -34,7 +36,7 @@ export interface Team {
 
 export interface GameState {
   currentDay: number; 
-  phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER";
+  phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER" | "ENDING";
   bailoutPool: number; 
   bailoutRequirement: number;
   teams: Team[]; 
@@ -44,10 +46,17 @@ export interface GameState {
 
 // 2. 常數設定
 export const JOB_CONFIG: Record<string, any> = {
-  GARDENER: { name: "園丁", apCost: 5, description: "親近大地，在繁茂的莊園中維持秩序。" },
-  BUTLER: { name: "管家", apCost: 6, description: "大宅的心臟，維持精英生活的體面與無暇。" },
-  DRIVER: { name: "司機", apCost: 8, description: "穿梭都市繁華，精英階層不可或缺的移動延伸。" },
-  TUTOR: { name: "家教", apCost: 10, description: "傳播知識，指導下一代的精英種子。" },
+  GARDENER: { name: "園丁", enName: "Gardener", apCost: 5, description: "親近大地，在繁茂的莊園中維持秩序。" },
+  BUTLER: { name: "管家", enName: "Butler", apCost: 6, description: "大宅的心臟，維持精英生活的體面與無暇。" },
+  DRIVER: { name: "司機", enName: "Driver", apCost: 8, description: "穿梭都市繁華，精英階層不可或缺的移動延伸。" },
+  TUTOR: { name: "家教", enName: "Tutor", apCost: 10, description: "傳播知識，指導下一代的精英種子。" },
+};
+
+export const JOB_COLORS: Record<string, { bg: string; border: string; text: string; label: string }> = {
+  GARDENER: { bg: "bg-green-50", border: "border-green-200", text: "text-green-900", label: "text-green-500" },
+  BUTLER: { bg: "bg-red-50", border: "border-red-200", text: "text-red-900", label: "text-red-500" },
+  DRIVER: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-900", label: "text-yellow-500" },
+  TUTOR: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-900", label: "text-blue-500" },
 };
 
 export const SALARY_TABLE: Record<string, number[]> = {

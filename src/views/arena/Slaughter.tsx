@@ -1,5 +1,5 @@
 // src/views/arena/Slaughter.tsx
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Team, GameState } from "../../shared";
 import { cn } from "../../lib/utils";
 import { AlertCircle } from "lucide-react";
@@ -12,10 +12,17 @@ interface SlaughterProps {
 }
 
 export default function Slaughter({ currentTeam, gameState, fetchGameState, setMessage }: SlaughterProps) {
-  const [donationAmount, setDonationAmount] = useState(0);
+   const [donationAmount, setDonationAmount] = useState("");
 
   const handleDonate = async () => {
-    if (donationAmount > currentTeam.cash) {
+      const parsedAmount = Number(donationAmount);
+      if(!confirm(`確認捐獻$${donationAmount}嗎?`))
+      if (!Number.isFinite(parsedAmount) || parsedAmount < 0) {
+          setMessage({ text: "請輸入有效的捐獻金額！", type: "error" });
+          return;
+      }
+
+      if (parsedAmount > currentTeam.cash) {
        setMessage({ text: "現金不足以支付此捐獻額！", type: "error" });
        return;
     }
@@ -24,13 +31,13 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
       const res = await fetch("/api/action/donate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId: currentTeam.id, amount: donationAmount })
+            body: JSON.stringify({ teamId: currentTeam.id, amount: parsedAmount })
       });
       const data = await res.json();
       if (res.ok) {
         fetchGameState();
-        setMessage({ text: `成功向金庫捐獻 $${donationAmount}！`, type: "success" });
-        setDonationAmount(0);
+            setMessage({ text: `成功向金庫捐獻 $${parsedAmount}！`, type: "success" });
+            setDonationAmount("");
       } else {
         setMessage({ text: data.error, type: "error" });
       }
@@ -77,34 +84,44 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
           </div>
 
           {/* 捐獻區塊 */}
-          <div className="bg-zinc-900 p-6 border border-zinc-700">
-             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Make a Donation / 執行捐獻 (可為 $0)</div>
-             <div className="flex flex-col md:flex-row items-stretch gap-4">
-                <div className="flex flex-1 items-stretch bg-black border-2 border-white focus-within:border-yellow-500 transition-colors">
-                   <span className="flex items-center px-4 font-black text-white bg-zinc-800 border-r-2 border-white">$</span>
-                   <input 
-                      type="number" 
-                      min="0" 
-                      max={currentTeam.cash}
-                      step="50" 
-                      value={donationAmount} 
-                      onChange={(e) => setDonationAmount(Number(e.target.value))} 
-                      className="w-full px-4 outline-none font-black text-2xl bg-transparent text-white"
-                   />
+          {isLastPlace ? (
+             <div className="bg-zinc-900 p-6 border border-zinc-700">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Action Locked / 行動鎖定</div>
+                <div className="flex flex-col items-center justify-center bg-black border-2 border-dashed border-slate-700 py-10 px-4 text-center opacity-80">
+                   <div className="text-2xl font-black text-slate-500 uppercase tracking-widest">您是本次屠殺的主謀</div>
+                   <div className="text-sm font-bold text-slate-600 mt-2">請靜候其他小隊的援助與命運的審判。</div>
                 </div>
-                <button 
-                   onClick={handleDonate} 
-                   // 💡 移除了 isSafe 與 donationAmount <= 0 的限制，允許捐獻 0 元
-                   disabled={donationAmount < 0 || donationAmount > currentTeam.cash || currentTeam.actionProgress === "DONATED"}
-                   className="px-8 py-4 bg-yellow-500 text-black font-black uppercase tracking-widest text-lg hover:bg-yellow-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                   {currentTeam.actionProgress === "DONATED" ? "已提交" : "確認捐獻"}
-                </button>
              </div>
-             <div className="text-right mt-2 text-xs font-bold text-white/40">
-                 您目前最多可捐獻: ${currentTeam.cash}
+          ) : (
+             <div className="bg-zinc-900 p-6 border border-zinc-700">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Make a Donation / 執行捐獻 (可為 $0)</div>
+                <div className="flex flex-col md:flex-row items-stretch gap-4">
+                   <div className="flex flex-1 items-stretch bg-black border-2 border-white focus-within:border-yellow-500 transition-colors">
+                      <span className="flex items-center px-4 font-black text-white bg-zinc-800 border-r-2 border-white">$</span>
+                      <input 
+                         type="number" 
+                         min="0" 
+                         max={currentTeam.cash}
+                         step="50" 
+                         value={donationAmount} 
+                         onChange={(e: ChangeEvent<HTMLInputElement>) => setDonationAmount(e.target.value)} 
+                         className="w-full px-4 outline-none font-black text-2xl bg-transparent text-white"
+                      />
+                   </div>
+                   <button 
+                      onClick={handleDonate} 
+                      disabled={donationAmount === "" || Number(donationAmount) < 0 || Number(donationAmount) > currentTeam.cash || currentTeam.actionProgress === "DONATED"}
+                      className="px-8 py-4 bg-yellow-500 text-black font-black uppercase tracking-widest text-lg hover:bg-yellow-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                   >
+                      {currentTeam.actionProgress === "DONATED" ? "已提交" : "確認捐獻"}
+                   </button>
+                </div>
+                <div className="text-right mt-2 text-xs font-bold text-white/40">
+                    您目前最多可捐獻: ${currentTeam.cash}
+                </div>
              </div>
-          </div>
+          )}
+          
       </div>
     </section>
   );

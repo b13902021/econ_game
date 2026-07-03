@@ -11,7 +11,8 @@ interface AdminPanelProps {
 export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProps) {
   const [message, setMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
 
-  const handleAction = async (url: string, confirmText: string) => {
+  const handleAction = async (url: string | null, confirmText: string) => {
+    if(!url) return;
     if (!confirm(confirmText)) return;
     try {
       const res = await fetch(url, { method: "POST" });
@@ -63,10 +64,16 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
         }
       case "SLAUGHTER":
         return {
-          title: "結束遊戲",
-          url: "/api/admin/next-day",
-          confirm: `確定要結束遊戲嗎`
+          title: "結算屠殺",
+          url: "/api/admin/execute-slaughter",
+          confirm: `確定要結算屠殺嗎`
         };
+      case "ENDING":
+        return {
+          title: "遊戲已結束",
+          url: null,
+          confirm: '遊戲已經結束'
+        }
       default:
         return { title: "未知階段", url: "", confirm: "" };
     }
@@ -84,6 +91,13 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
   const getReportLabel = (team: Team) => {
     if (team.greedAmount > 0) {
       return `$${team.greedAmount}`;
+    }
+    return "--";
+  };
+
+  const getSlaughterDonationLabel = (team: Team) => {
+    if (team.slaughterDonation > 0) {
+      return `$${team.slaughterDonation}`;
     }
     return "--";
   };
@@ -160,16 +174,22 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
            <button onClick={fetchGameState} className="px-4 py-2 border-2 border-black font-bold bg-white hover:bg-slate-200">⟳ 重新整理</button>
         </div>
         <div className="overflow-x-auto p-4">
-             <table className="w-full text-left border-collapse">
+             <table className="w-full min-w-[1700px] text-left border-collapse">
                <thead>
                  <tr className="bg-slate-50 border-b-4 border-black text-xs uppercase tracking-widest">
                    <th className="p-4 font-black border-r-2 border-black">Team</th>
-                   <th className="p-4 font-black border-r-2 border-black text-center">AP/勞動</th>
-                   <th className="p-4 font-black border-r-2 border-black text-center">現金</th>
-                   <th className="p-4 font-black border-r-2 border-black text-center">累計額外消費</th>
-                   <th className="p-4 font-black border-r-2 border-black text-center">檢舉</th>
                    <th className="p-4 font-black border-r-2 border-black text-center">職業</th>
-                   <th className="p-4 font-black text-right">浮報</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">進度</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">勝利</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">現金</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">幸福</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">今日休息</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">總休息</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">額外消費</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">浮報金額</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">檢舉標的</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">屠殺捐獻</th>
+                   <th className="p-4 font-black border-r-2 border-black text-center">alpha</th>
                  </tr>
                </thead>
                <tbody>
@@ -179,16 +199,18 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
                        <td className="p-4 font-bold border-r-2 border-black">
                           {team.name} {team.isDead && "☠"}
                        </td>
-                       <td className="p-4 font-bold border-r-2 border-black text-center text-xs text-slate-500">
-                         {team.actionProgress}
-                       </td>
+                       <td className="p-4 font-bold text-center border-r-2 border-black">{getJobLabel(team)}</td>
+                       <td className="p-4 font-bold text-center border-r-2 border-black text-xs text-slate-500">{team.actionProgress}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{team.realVictory.toFixed(2)}</td>
                        <td className="p-4 font-black text-center border-r-2 border-black">${team.cash}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{team.happiness.toFixed(2)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{team.todayRest}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{team.totalRestHours}</td>
                        <td className="p-4 font-black text-center border-r-2 border-black">{getConsumptionLabel(team)}</td>
-                       <td className="p-4 font-black text-center border-r-2 border-black">
-                         {team.reportedTargetId ? team.reportedTargetId : "--"}
-                       </td>
-                       <td className="p-4 font-black text-center border-r-2 border-black">{getJobLabel(team)}</td>
-                       <td className="p-4 font-black text-right">{getReportLabel(team)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{getReportLabel(team)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{team.reportedTargetId || "--"}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{getSlaughterDonationLabel(team)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{team.alpha.toFixed(1)}</td>
                      </tr>
                    );
                  })}

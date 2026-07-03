@@ -17,6 +17,7 @@ const THEME_MAP: Record<string, string> = {
 };
 
 export default function JobMarket({ currentTeam, gameState, fetchGameState, setMessage }: JobMarketProps) {
+  
   const isConfirmed = currentTeam.actionProgress === "JOBed";
   const hasRealJob = currentTeam.realJob !== null;
 
@@ -56,7 +57,9 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
       </div>
 
       <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-8", hasRealJob && "opacity-50 grayscale pointer-events-none")}>
-        {Object.entries(JOB_CONFIG).map(([jobId, config]: [string, any]) => {
+        
+        {Object.entries(JOB_CONFIG).map(([jobId, config]: [string, any]) => { 
+          //以下是每個格子的邏輯
           const hasLicense = currentTeam.licenseProgress[jobId] >= config.apCost;
 
           return (
