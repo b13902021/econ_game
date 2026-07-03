@@ -15,10 +15,12 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
   const hasSubmitted = currentTeam.reportedTargetId !== null;
 
   const handleSubmitReport = async (targetId: string | "NONE") => {
-    if(targetId === "NONE")
+    if(targetId === "NONE"){
       if(!confirm("確定安分守己嗎")) return;
-    else
+    }
+    else{
       if(!confirm("確定檢舉該小隊嗎")) return;
+    }
     try {
       const res = await fetch("/api/action/report", {
         method: "POST",
@@ -89,7 +91,7 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
       <div className="space-y-2">
          <p className="font-black text-xl text-purple-900">真相與代價</p>
          <p className="font-bold text-purple-700 text-sm bg-purple-50 p-4 border-l-4 border-purple-500">
-            您只能檢舉 <span className="text-red-600 underline">一支小隊</span>。若對方確實浮報薪資，系統將沒收其不法所得並施加罰款；<br/>
+            您只能檢舉 <span className="text-red-600 underline"> 同業的一支小隊</span>。若對方確實浮報薪資，系統將沒收其不法所得並施加罰款；<br/>
             但若您指控的對象是清白的，您將被視為<span className="text-red-600 bg-red-100 px-1">惡意誣告</span>，並扣除鉅額罰金！
          </p>
       </div>

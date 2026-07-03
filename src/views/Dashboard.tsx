@@ -84,8 +84,8 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
 
     // 5. 屠殺階段
     if (gameState.phase === "SLAUGHTER") {
-      if(currentTeam.actionProgress === "DONATE_DECIDED")
-         return <WaitingPanel message="遊戲已結束..." />;
+      if(currentTeam.actionProgress === "DONATE_SUMMITTED")
+         return <WaitingPanel message="等待主持人結算" />;
       return <Slaughter currentTeam={currentTeam} gameState={gameState} fetchGameState={fetchGameState} setMessage={setMessage} />;
     }
 
@@ -210,7 +210,7 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
                              ${(() => {
                                  return currentTeam.realJob ? currentTeam.wageRate : "-";
                              })()}
-                          <span className="text-lg">/HRS</span></div>
+                          <span className="text-lg">/HR</span></div>
                        </div>
                     </div>
                  </div>

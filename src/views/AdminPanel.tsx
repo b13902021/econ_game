@@ -196,6 +196,63 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
              </table>
         </div>
       </div>
+
+      {/* 💼 工作市場監控 */}
+      <div className="border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div className="bg-blue-100 p-4 border-b-4 border-black">
+           <h3 className="text-2xl font-black uppercase text-blue-900">工作市場監控</h3>
+        </div>
+        <div className="overflow-x-auto p-4">
+             <table className="w-full text-left border-collapse">
+               <thead>
+                 <tr className="bg-blue-50 border-b-4 border-black text-xs uppercase tracking-widest">
+                   <th className="p-4 font-black border-r-2 border-black">工作</th>
+                   <th className="p-4 font-black border-r-2 border-black">執照考取隊伍</th>
+                   <th className="p-4 font-black border-r-2 border-black">現在在職隊伍</th>
+                   <th className="p-4 font-black">現在時薪</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {Object.entries(JOB_CONFIG).map(([jobCode, jobInfo]) => {
+                   const employed = gameState.teams.filter(t => t.realJob === jobCode).map(t => t.name);
+                   const examProgress = gameState.teams
+                     .filter(t => {
+                       const progress = t.licenseProgress?.[jobCode] || 0;
+                       return progress > 0;
+                     })
+                     .map(t => {
+                       const progress = t.licenseProgress?.[jobCode] || 0;
+                       if (progress >= jobInfo.apCost) {
+                         return `${t.name} (✔ 已完成)`;
+                       } else {
+                         return `${t.name} (${progress}/${jobInfo.apCost})`;
+                       }
+                     });
+                   const SALARY_TABLE: Record<string, number[]> = {
+                     GARDENER: [190, 180, 160, 130, 100, 70, 70, 70, 70, 70],
+                     BUTLER: [220, 200, 170, 130, 90, 50, 50, 50, 50, 50],
+                     DRIVER: [260, 230, 190, 140, 90, 40, 40, 40, 40, 40],
+                     TUTOR: [320, 270, 210, 140, 80, 20, 20, 20, 20, 20],
+                   };
+                   const currentSalary = SALARY_TABLE[jobCode]?.[gameState.currentDay - 1] || 0;
+                   
+                   return (
+                     <tr key={jobCode} className="border-b border-slate-200 hover:bg-blue-50">
+                       <td className="p-4 font-black border-r-2 border-black text-blue-900">{jobInfo.name}</td>
+                       <td className="p-4 font-bold border-r-2 border-black">
+                         {examProgress.length > 0 ? examProgress.join(", ") : "--"}
+                       </td>
+                       <td className="p-4 font-bold border-r-2 border-black">
+                         {employed.length > 0 ? employed.join(", ") : "--"}
+                       </td>
+                       <td className="p-4 font-black text-green-700">${currentSalary}</td>
+                     </tr>
+                   );
+                 })}
+               </tbody>
+             </table>
+        </div>
+      </div>
     </div>
   );
 }

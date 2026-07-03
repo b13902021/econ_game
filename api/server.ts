@@ -131,29 +131,20 @@ app.post("/api/action/apply-job", async (req, res) => {
 });
 
 // 離職 (退 1 休息時數，重置應徵狀態)
-app.post("/api/action/quit-job", async (req, res) => {
+app.post("/api/action/resign", async (req, res) => {
   withStateLock(req, res, () => {
-    const { teamId } = req.body;
+    const { teamId, isToQuit } = req.body;
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team) return res.status(404).json({ error: "小隊不存在" });
     
-    if (team.totalRestHours <= 0) return res.status(400).json({ error: "休息時數不足，無法辭職" });
+    if (team.todayRest <= 0) return res.status(400).json({ error: "今日休息時數不足，無法辭職" });
 
-    if (team.realJob) {
-       team.realJob = null; 
-    } else {
-       Object.keys(gameState.jobApplications).forEach(key => {
-         gameState.jobApplications[key] = gameState.jobApplications[key].filter(id => id !== teamId);
-       });
+    if (isToQuit){
+      team.realJob = null;
+      team.totalRestHours -= 1;
+      updateHappiness(team);
+      updateVictory(team, false);
     }
-    
-    // 💡 辭職懲罰：扣除 1 單位 totalRestHours
-    team.totalRestHours -= 1;
-    updateHappiness(team);
-    updateVictory(team, false);
-    updateRank(gameState);
-
-
     team.actionProgress = "RESIGN_DECIDED";
     res.json({ success: true, team });
   });
@@ -177,7 +168,6 @@ app.post("/api/action/submit-ap", async (req, res) => {
     if (team.realJob && work < 8) return res.status(400).json({ error: "正職工作至少需要 8 AP" });
 
     team.cash += pizza * 150;
-
     if (team.realJob && work >= 8) {
       team.cash += work * team.wageRate;
       team.workHours = work;
@@ -189,7 +179,7 @@ app.post("/api/action/submit-ap", async (req, res) => {
         team.licenseProgress[jobId] = (team.licenseProgress[jobId] || 0) + apInv;
       }
     });
-
+    team.todayRest = rest;
     team.totalRestHours += rest;
     updateHappiness(team);
     updateVictory(team, false);
@@ -270,29 +260,23 @@ app.post("/api/action/donate", async (req, res) => {
     team.cash -= amount;
     gameState.bailoutPool += amount;
     updateVictory(team, false);
-updateRank(gameState);
-
+    team.actionProgress = "DONATE_SUMMITTED";
     res.json({ success: true, team });
   });
 });
 
 // 屠殺專用 API (九取一隨機淘汰)
-app.post("/api/action/execute-slaughter", async (req, res) => {
+app.post("/api/admin/execute-slaughter", async (req, res) => {
   withStateLock(req, res, () => {
-    const { initiatorId } = req.body;
-    
     if (gameState.phase !== "SLAUGHTER") return res.status(400).json({ error: "不在屠殺階段" });
-    if (gameState.bailoutPool >= 1000) return res.status(400).json({ error: "金庫已達標，無法發動屠殺" });
-
-    // 過濾出「不是發起人」且「還活著」的小隊
-    const potentialVictims = gameState.teams.filter(t => t.id !== initiatorId && !t.isDead);
-    if (potentialVictims.length === 0) return res.status(400).json({ error: "沒有可屠殺的目標" });
-
-    // 隨機挑選一位受害者，優雅地標記死亡
-    const randomIndex = Math.floor(Math.random() * potentialVictims.length);
-    const victim = potentialVictims[randomIndex];
-    victim.isDead = true;
-
+    if (gameState.bailoutPool < gameState.bailoutRequirement){
+      const lastPlaceRank = gameState.teams.at(-1)?.publicRank;
+      const potentialVictims = gameState.teams.filter(t => t.publicRank !== lastPlaceRank);
+      const victim = potentialVictims[Math.floor(Math.random() * potentialVictims.length)];
+      victim.isDead = true;
+    }
+    gameState.teams.forEach(team => updateVictory(team, true));
+    updateRank(gameState);
     res.json({ success: true, victimName: victim.name });
   });
 });
@@ -373,13 +357,19 @@ app.post("/api/admin/resolve-report", async (req, res) => {
           }
        }
        updateVictory(team, true);
-updateRank(gameState);
+        updateRank(gameState);
 
        // 寫入 DB，讓前端明天能看到
        team.reportResult = { message1: passiveMsg, message2: activeMsg };
     });
-
-    gameState.phase = gameState.currentDay === 4 ? "SLAUGHTER" : "RESIGN";
+    if (gameState.currentDay < 4) {
+      gameState.phase = "RESIGN";
+    } else {
+      gameState.phase = "SLAUGHTER";
+      const lastPlaceRank = gameState.teams.at(-1)?.publicRank;
+      const lastPlaceCount = gameState.teams.filter(t => t.publicRank === lastPlaceRank).length;
+      gameState.bailoutRequirement = 1000 + 500 * lastPlaceCount;
+    }
     res.json({ success: true, phase: gameState.phase });
   });
 });

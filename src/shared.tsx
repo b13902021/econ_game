@@ -23,6 +23,7 @@ export interface Team {
   wageRate: number; 
 
   actionProgress:  "BEGINNING" | "JOB_CONFIRMED" | "AP_ALLOCATED" | "PARASITE_DECIDED" | "CONSUMPTION_DECIDED" | "REPORT_SUBMITTED" | "RESIGN_DECIDED" | "DONATE_SUMMITTED";
+  todayRest: number;
   workHours: number;
   licenseProgress: Record<string, number>;
   greedAmount: number;
@@ -35,6 +36,7 @@ export interface GameState {
   currentDay: number; 
   phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER";
   bailoutPool: number; 
+  bailoutRequirement: number;
   teams: Team[]; 
   jobApplications: Record<string, string[]>;
   peachPrice: number;

@@ -10,33 +10,34 @@ dotenv.config();
 // ==========================================
 export interface Team {
   id: string;
-  name: string;
+  name: string; //
   pin: string;
 
   // 排名資訊
-  publicRank: number;
+  publicRank: number; //
   previousRank: number;
-  realVictory: number;
-  publicVictory: number;
-  previousVictory: number;
-  realJob: string | null;
+  realVictory: number; //
+  publicVictory: number; 
+  previousVictory: number; 
+  realJob: string | null; //
   publicJob: string | null;
-  isDead: boolean;
+  isDead: boolean; //
 
   // 私有資訊
-  cash: number;
+  cash: number; //
   alpha: number;
-  happiness: number;
-  totalRestHours: number;
-  totalExtraPeaches: number;
-  wageRate: number; 
+  happiness: number; //
+  totalRestHours: number; //
+  totalExtraPeaches: number; //
+  wageRate: number; //
 
   // 決策與進度
-  actionProgress: "BEGINNING" | "JOB_CONFIRMED" | "AP_ALLOCATED" | "PARASITE_DECIDED" | "CONSUMPTION_DECIDED" | "REPORT_SUBMITTED" | "RESIGN_DECIDED" | "DONATE_SUMMITTED";
+  actionProgress: "BEGINNING" | "JOB_CONFIRMED" | "AP_ALLOCATED" | "PARASITE_DECIDED" | "CONSUMPTION_DECIDED" | "REPORT_SUBMITTED" | "RESIGN_DECIDED" | "DONATE_SUMMITTED"; //
+  todayRest: number; //
   workHours: number;
   licenseProgress: Record<string, number>;
-  greedAmount: number;
-  reportedTargetId: string | null;
+  greedAmount: number; //
+  reportedTargetId: string | null; //
   reportResult: any | null; 
 }
 
@@ -45,6 +46,7 @@ export interface GameState {
   phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER"; 
   teams: Team[];
   bailoutPool: number;
+  bailoutRequirement: number;
   jobApplications: Record<string, string[]>;
   peachPrice: number;
 }
@@ -72,6 +74,7 @@ export function getInitialState(): GameState {
     currentDay: 1, 
     phase: "EARN_AND_SPEND",
     bailoutPool: 0, 
+    bailoutRequirement: 0,
     teams: [], 
     jobApplications: {},
     peachPrice: PEACH_PRICE_TABLE[1] || 120,
@@ -99,6 +102,7 @@ export function getInitialState(): GameState {
     totalExtraPeaches: 0,
     wageRate: 0,
     actionProgress: "BEGINNING",
+    todayRest: 0,
     workHours: 0,
     licenseProgress: { GARDENER: 0, BUTLER: 0, DRIVER: 0, TUTOR: 0 },
     greedAmount: 0,
