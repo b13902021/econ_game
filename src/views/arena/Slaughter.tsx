@@ -95,10 +95,10 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
                 <button 
                    onClick={handleDonate} 
                    // 💡 移除了 isSafe 與 donationAmount <= 0 的限制，允許捐獻 0 元
-                   disabled={donationAmount < 0 || donationAmount > currentTeam.cash || currentTeam.actionProgress === "DONATE_SUMMITTED"}
+                   disabled={donationAmount < 0 || donationAmount > currentTeam.cash || currentTeam.actionProgress === "DONATED"}
                    className="px-8 py-4 bg-yellow-500 text-black font-black uppercase tracking-widest text-lg hover:bg-yellow-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                   {currentTeam.actionProgress === "DONATE_SUMMITTED" ? "已提交" : "確認捐獻"}
+                   {currentTeam.actionProgress === "DONATED" ? "已提交" : "確認捐獻"}
                 </button>
              </div>
              <div className="text-right mt-2 text-xs font-bold text-white/40">

@@ -33,7 +33,7 @@ export default function Resign({ currentTeam, gameState, fetchGameState, setMess
       const data = await res.json();
       if (res.ok) {
         fetchGameState();
-        setMessage({ text: "已成功辭職，明天請重新尋找工作。", type: "success" });
+        setMessage({ text: "已成功", type: "success" });
       } else {
         setMessage({ text: data.error, type: "error" });
       }
@@ -91,7 +91,6 @@ export default function Resign({ currentTeam, gameState, fetchGameState, setMess
             <h3 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-blue-900">End of Day</h3>
             <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">第五階段：職位去留與換日等待</p>
          </div>
-         // 尚未鎖定的決策畫面
          <div className="space-y-8">
             {currentTeam.realJob ? (
                <>
@@ -102,7 +101,7 @@ export default function Resign({ currentTeam, gameState, fetchGameState, setMess
                            <div className="text-sm font-black uppercase tracking-widest text-blue-500 mb-1">Current Position / 當前職位</div>
                            <div className="text-5xl font-black uppercase text-blue-900">{JOB_CONFIG[currentTeam.realJob]?.name}</div>
                            <div className="text-xl font-bold text-blue-700 mt-3 bg-blue-100 inline-block px-4 py-1">
-                              累積休息時數: {currentTeam.totalRestHours} HRS
+                              今日休息時數: {currentTeam.todayRest} HRS
                            </div>
                         </div>
                      </div>

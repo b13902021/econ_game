@@ -17,7 +17,7 @@ const THEME_MAP: Record<string, string> = {
 };
 
 export default function JobMarket({ currentTeam, gameState, fetchGameState, setMessage }: JobMarketProps) {
-  const isConfirmed = currentTeam.actionProgress === "JOB_CONFIRMED";
+  const isConfirmed = currentTeam.actionProgress === "JOBed";
   const hasRealJob = currentTeam.realJob !== null;
 
   const handleApplyJob = async (jobId: string | null) => {
@@ -25,7 +25,8 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
       const res = await fetch("/api/action/apply-job", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teamId: currentTeam.id, jobId: jobId || "NONE" })
+        // 💡 乾淨傳遞：直接送出字串或 null，不再塞入詭異的 "NONE"
+        body: JSON.stringify({ teamId: currentTeam.id, jobId }) 
       });
       const data = await res.json();
       if (res.ok) {
@@ -38,10 +39,6 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
       setMessage({ text: "連線錯誤", type: "error" });
     }
   };
-
-  const currentAppliedJob = Object.keys(gameState.jobApplications).find(jobId => 
-    gameState.jobApplications[jobId]?.includes(currentTeam.id)
-  );
 
   return (
     <section className={cn("border-4 p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8 transition-colors", hasRealJob ? "bg-slate-100 border-slate-400" : "bg-white border-black")}>
@@ -58,17 +55,9 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
          )}
       </div>
 
-      {hasRealJob && !isConfirmed && (
-          <div className="bg-slate-200 border-4 border-slate-400 p-6 text-slate-600 font-bold text-center uppercase tracking-widest">
-              您已擁有正職，無法參與今日的就業市場。請點擊下方按鈕直接進入勞動階段。
-          </div>
-      )}
-
       <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-8", hasRealJob && "opacity-50 grayscale pointer-events-none")}>
         {Object.entries(JOB_CONFIG).map(([jobId, config]: [string, any]) => {
           const hasLicense = currentTeam.licenseProgress[jobId] >= config.apCost;
-          const isApplied = currentAppliedJob === jobId;
-          const isDisabledCard = hasRealJob || (!hasLicense && !isApplied);
 
           return (
             <div 
@@ -76,8 +65,7 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
               className={cn(
                 "p-8 border-4 transition-all relative flex flex-col justify-between min-h-[200px]",
                 hasLicense && !hasRealJob ? THEME_MAP[jobId] || "border-black" : "border-slate-300",
-                isDisabledCard ? "bg-slate-50" : "hover:bg-slate-50",
-                isApplied ? "shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] translate-y-[-2px] translate-x-[-2px]" : ""
+                (hasRealJob || !hasLicense) ? "bg-slate-50" : "hover:bg-slate-50"
               )}
             >
               <div className="flex justify-between items-start mb-4">
@@ -90,21 +78,22 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
                 </div>
               </div>
 
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">
-                 Status: {isApplied ? "Applied ✓" : hasRealJob ? "Locked" : "Vacant"}
-              </div>
-
-              {isApplied ? (
-                 <div className="w-full py-4 bg-green-600 text-white font-black text-center uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    已送出履歷
-                 </div>
-              ) : hasRealJob ? (
-                 <div className="w-full py-4 bg-slate-300 text-slate-500 font-black text-center uppercase tracking-widest border-2 border-dashed border-slate-400">
-                    鎖定中
+              {/* 💡 嚴格根據你的邏輯要求渲染卡片狀態 */}
+              {hasRealJob ? (
+                 <div className="w-full py-4 bg-slate-200 text-slate-500 font-black text-center uppercase tracking-widest border-2 border-dashed border-slate-400">
+                    您已有工作
                  </div>
               ) : !hasLicense ? (
                  <div className="w-full py-4 bg-slate-200 text-slate-400 font-black text-center uppercase tracking-widest border-2 border-dashed border-slate-300">
-                    未考取執照
+                    未取得執照
+                 </div>
+              ) : isConfirmed && currentTeam.realJob === jobId ? (
+                 <div className="w-full py-4 bg-green-600 text-white font-black text-center uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    已投遞履歷
+                 </div>
+              ) : isConfirmed ? (
+                 <div className="w-full py-4 bg-slate-300 text-slate-500 font-black text-center uppercase tracking-widest border-2 border-dashed border-slate-400">
+                    鎖定中
                  </div>
               ) : (
                  <button 
@@ -120,30 +109,23 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
         })}
       </div>
 
+      {/* 💡 底部大按鈕：動態顯示文字，並統一送出 null */}
       <div className={cn("pt-8 border-t-4 border-dashed", hasRealJob ? "border-slate-400" : "border-black")}>
-         {hasRealJob ? (
-             <button 
-                onClick={() => handleApplyJob("NONE")} 
-                disabled={isConfirmed}
-                className={cn(
-                  "w-full py-6 text-xl font-black uppercase tracking-[0.2em] transition-all",
-                  isConfirmed ? "bg-slate-300 text-slate-500 cursor-not-allowed border-4 border-slate-400" : "bg-black text-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                )}
-             >
-                {isConfirmed ? "狀態鎖定，等待市場結算" : "沿用當前正職，進入今日階段"}
-             </button>
-         ) : (
-             <button 
-                onClick={() => handleApplyJob("NONE")} 
-                disabled={isConfirmed}
-                className={cn(
-                  "w-full py-6 text-xl font-black uppercase tracking-[0.2em] transition-all",
-                  isConfirmed ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-4 border-black text-black hover:bg-slate-100 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                )}
-             >
-                {isConfirmed ? "狀態鎖定，等待市場結算" : currentAppliedJob ? "等待市場結算..." : "放棄投遞，確認進入打工階段"}
-             </button>
-         )}
+         <button 
+            onClick={() => handleApplyJob(null)} 
+            disabled={isConfirmed}
+            className={cn(
+              "w-full py-6 text-xl font-black uppercase tracking-[0.2em] transition-all",
+              isConfirmed ? "bg-slate-300 text-slate-500 cursor-not-allowed border-4 border-slate-400" : "bg-black text-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+            )}
+         >
+            {isConfirmed 
+               ? "狀態鎖定，等待市場結算" 
+               : hasRealJob 
+                  ? "確認當前職位" 
+                  : "放棄求職，滾回去地下室"
+            }
+         </button>
       </div>
     </section>
   );

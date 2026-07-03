@@ -78,7 +78,7 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
 
   // 💡 修正幽靈目標：過濾掉自己，以及「已經死亡」的小隊
   const otherTeams = gameState.teams.filter(t => {
-    return (t.id !== currentTeam.id) && (!currentTeam.realJob || t.publicJob === currentTeam.publicJob);
+    return (t.id !== currentTeam.id) && (t.realJob) && (!currentTeam.realJob || t.publicJob === currentTeam.publicJob);
   })
 
   return (
@@ -91,7 +91,7 @@ export default function Report({ currentTeam, gameState, fetchGameState, setMess
       <div className="space-y-2">
          <p className="font-black text-xl text-purple-900">真相與代價</p>
          <p className="font-bold text-purple-700 text-sm bg-purple-50 p-4 border-l-4 border-purple-500">
-            您只能檢舉 <span className="text-red-600 underline"> 同業的一支小隊</span>。若對方確實浮報薪資，系統將沒收其不法所得並施加罰款；<br/>
+            您只能檢舉 <span className="text-red-600 underline"> 下方的一支小隊</span>。若對方確實浮報薪資，系統將沒收其不法所得並施加罰款；<br/>
             但若您指控的對象是清白的，您將被視為<span className="text-red-600 bg-red-100 px-1">惡意誣告</span>，並扣除鉅額罰金！
          </p>
       </div>
