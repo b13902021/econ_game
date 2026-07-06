@@ -10,6 +10,7 @@ import {
   updateHappiness,
   updateVictory,
   updateRank,
+  getRankedTeams,
   getInitialState,
   JOB_CONFIG,
   SALARY_TABLE,
@@ -307,8 +308,9 @@ app.post("/api/admin/execute-slaughter", async (req, res) => {
   withStateLock(req, res, () => {
     if (gameState.phase !== "SLAUGHTER") return res.status(400).json({ error: "不在屠殺階段" });
     if (gameState.bailoutPool < gameState.bailoutRequirement){
-      const lastPlaceRank = gameState.teams.at(-1)?.publicRank;
-      const potentialVictims = gameState.teams.filter(t => t.publicRank !== lastPlaceRank);
+      const rankedTeams = getRankedTeams(gameState);
+      const lastPlaceRank = rankedTeams.at(-1)?.publicRank;
+      const potentialVictims = rankedTeams.filter(t => t.publicRank !== lastPlaceRank);
       const victim = potentialVictims[Math.floor(Math.random() * potentialVictims.length)];
       victim.isDead = true;
       res.json({ success: true, victimName: victim.name });
@@ -356,6 +358,8 @@ app.post("/api/admin/open-report", async (req, res) => {
 // 管理端：結算檢舉
 app.post("/api/admin/resolve-report", async (req, res) => {
   withStateLock(req, res, () => {
+    if (gameState.phase !== "REPORT") return res.status(400).json({ error: "目前不是檢舉結算階段" });
+
     const reportedCounts: Record<string, number> = {};
    const teamsSnapshot = [...gameState.teams];
    teamsSnapshot.forEach(t => {
@@ -421,8 +425,9 @@ app.post("/api/admin/resolve-report", async (req, res) => {
       gameState.phase = "RESIGN";
     } else {
       gameState.phase = "SLAUGHTER";
-      const lastPlaceRank = gameState.teams.at(-1)?.publicRank;
-      const lastPlaceCount = gameState.teams.filter(t => t.publicRank === lastPlaceRank).length;
+      const rankedTeams = getRankedTeams(gameState);
+      const lastPlaceRank = rankedTeams.at(-1)?.publicRank;
+      const lastPlaceCount = rankedTeams.filter(t => t.publicRank === lastPlaceRank).length;
       gameState.bailoutRequirement = 500 + 500 * lastPlaceCount;
     }
     res.json({ success: true, phase: gameState.phase });

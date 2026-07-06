@@ -7,6 +7,12 @@ interface LeaderboardProps {
 }
 
 export default function Leaderboard({ gameState }: LeaderboardProps) {
+  const rankedTeams = [...gameState.teams].sort((a, b) => {
+    if (a.isDead && !b.isDead) return 1;
+    if (!a.isDead && b.isDead) return -1;
+    return a.publicRank - b.publicRank;
+  });
+
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 font-sans">
       
@@ -38,7 +44,7 @@ export default function Leaderboard({ gameState }: LeaderboardProps) {
               </tr>
             </thead>
             <tbody>
-              {gameState.teams.map((team, idx) => {
+              {rankedTeams.map((team, idx) => {
                 
                 
                 // 判斷是否為第一天 (-1)，若是則強制視同無變動

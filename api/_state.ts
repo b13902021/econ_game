@@ -206,16 +206,21 @@ export function updateVictory(team: Team, announce: boolean) {
   }
 }
 
-export function updateRank(stateToUpdate: GameState){
-  stateToUpdate.teams.sort((a, b) => {
+export function getRankedTeams(stateToUpdate: GameState) {
+  return [...stateToUpdate.teams].sort((a, b) => {
     if (a.isDead && !b.isDead) return 1;
     if (!a.isDead && b.isDead) return -1;
     return b.publicVictory - a.publicVictory;
-  })
-  for(let i = 0 ; i < stateToUpdate.teams.length; ++i){
-    if(i === 0 || stateToUpdate.teams[i].publicVictory < stateToUpdate.teams[i-1].publicVictory)
-        stateToUpdate.teams[i].publicRank = i+1;
+  });
+}
+
+export function updateRank(stateToUpdate: GameState){
+  const rankedTeams = getRankedTeams(stateToUpdate);
+
+  for(let i = 0 ; i < rankedTeams.length; ++i){
+    if(i === 0 || rankedTeams[i].publicVictory < rankedTeams[i-1].publicVictory)
+        rankedTeams[i].publicRank = i+1;
     else
-        stateToUpdate.teams[i].publicRank = stateToUpdate.teams[i-1].publicRank;
+        rankedTeams[i].publicRank = rankedTeams[i-1].publicRank;
   }
 }

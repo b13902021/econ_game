@@ -45,7 +45,7 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
       setMessage({ text: "連線錯誤", type: "error" });
     }
   };
-  const isLastPlace = (currentTeam.publicRank === gameState.teams.at(-1)?.publicRank);
+   const isLastPlace = currentTeam.publicRank === Math.max(...gameState.teams.map((team) => team.publicRank));
   
   
   return (
