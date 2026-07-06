@@ -36,7 +36,7 @@ export interface Team {
 
 export interface GameState {
   currentDay: number; 
-  phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "REPORT" | "RESIGN" | "SLAUGHTER" | "ENDING";
+  phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "AP_ALLOCATION" | "PARASITE" | "REPORT" | "RESIGN" | "SLAUGHTER" | "ENDING";
   bailoutPool: number; 
   bailoutRequirement: number;
   teams: Team[]; 

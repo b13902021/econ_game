@@ -33,40 +33,48 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
     switch (gameState.phase) {
       case "JOB_HUNTING":
         return {
-          title: "結束求職，進入分配AP階段",
+          title: "結束求職，開放 AP 分配階段",
           url: "/api/admin/open-ap-market",
-          confirm: "確定所有小隊皆已投遞履歷？即將進入勞動與消費階段。"
+          confirm: "⚠ 確定所有小隊都已完成投遞履歷嗎？按下後將開放 AP 分配。"
         };
       case "EARN_AND_SPEND":
         if(gameState.currentDay === 1){
           return {
             title: "進入下一天",
             url: "/api/admin/next-day",
-            confirm: "確認要結束今天嗎?"
+            confirm: "⚠ 確定要結束今天並進入下一天嗎？"
           }
         }
+        return { title: "未知階段", url: null, confirm: "" };
+      case "AP_ALLOCATION":
         return {
-          title: "鎖定市場，開放檢舉階段",
+          title: "鎖定 AP 分配，開放浮報階段",
+          url: "/api/admin/open-parasite",
+          confirm: "⚠ 確定所有小隊都已完成 AP 分配嗎？按下後將開放浮報。"
+        };
+      case "PARASITE":
+        return {
+          title: "鎖定浮報與消費，開放檢舉階段",
           url: "/api/admin/open-report",
-          confirm: "確定小隊皆已完成水蜜桃消費?"
+          confirm: "⚠ 確定所有小隊都已完成浮報與水蜜桃消費嗎？按下後將進入檢舉階段。"
         };
       case "REPORT":
         return {
           title: `結算檢舉結果並進入${(gameState.currentDay === 4)?"屠殺":"辭職"}階段`,
           url: "/api/admin/resolve-report",
-          confirm: "確定結算檢舉?"
+          confirm: "⚠ 確定要結算所有檢舉結果嗎？"
         };
       case "RESIGN":
         return {
           title: "進入下一天",
           url: "/api/admin/next-day",
-          confirm: "確認要結束今天嗎?"
+          confirm: "⚠ 確定要結束今天並進入下一天嗎？"
         }
       case "SLAUGHTER":
         return {
           title: "結算屠殺",
           url: "/api/admin/execute-slaughter",
-          confirm: `確定要結算屠殺嗎`
+          confirm: `⚠ 確定要結算屠殺嗎？`
         };
       case "ENDING":
         return {
@@ -75,7 +83,7 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
           confirm: '遊戲已經結束'
         }
       default:
-        return { title: "未知階段", url: "", confirm: "" };
+        return { title: "未知階段", url: null, confirm: "" };
     }
   };
 

@@ -185,7 +185,10 @@ app.post("/api/action/submit-ap", async (req, res) => {
     const team = gameState.teams.find(t => t.id === teamId);
     
     if (!team) return res.status(404).json({ error: "小隊不存在" });
-    if (team.actionProgress !== "BEGINNING" && team.actionProgress !== "JOBed") {
+  if (gameState.phase !== "EARN_AND_SPEND" && gameState.phase !== "AP_ALLOCATION") {
+    return res.status(400).json({ error: "目前不是 AP 分配階段" });
+  }
+  if (team.actionProgress !== "BEGINNING" && team.actionProgress !== "JOBed") {
         return res.status(400).json({ error: "AP分配已鎖定" });
     }
 
@@ -225,6 +228,7 @@ app.post("/api/action/parasite", async (req, res) => {
     const { teamId, multiplier } = req.body;
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team) return res.status(404).json({ error: "小隊不存在" });
+    if (gameState.phase !== "PARASITE") return res.status(400).json({ error: "目前不是浮報階段" });
     if (team.actionProgress !== "APed") return res.status(400).json({ error: "尚未完成AP分配" });
 
     const baseSalary = team.realJob ? (team.workHours * team.wageRate) : 0;
@@ -242,7 +246,7 @@ app.post("/api/action/confirm-consumption", async (req, res) => {
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team) return res.status(404).json({ error: "小隊不存在" });
     if (team.actionProgress === "CONSUMED") return res.status(400).json({ error: "消費已鎖定" });
-    if (gameState.phase !== "EARN_AND_SPEND") return res.status(400).json({ error: "目前不是消費階段" });
+    if (gameState.phase !== "EARN_AND_SPEND" && gameState.phase !== "PARASITE") return res.status(400).json({ error: "目前不是消費階段" });
     if (team.actionProgress !== "APed" && team.actionProgress !== "PARASITED") {
       return res.status(400).json({ error: "尚未完成消費前置流程" });
     }
@@ -329,7 +333,15 @@ app.post("/api/admin/open-ap-market", async (req, res) => {
     gameState.teams.forEach((team) => {
       team.publicJob = team.realJob;
     });
-    gameState.phase = "EARN_AND_SPEND";
+    gameState.phase = gameState.currentDay === 1 ? "EARN_AND_SPEND" : "AP_ALLOCATION";
+    res.json({ success: true, gameState });
+  });
+});
+
+app.post("/api/admin/open-parasite", async (req, res) => {
+  withStateLock(req, res, () => {
+    if (gameState.phase !== "AP_ALLOCATION") return res.status(400).json({ error: "目前不是可開放浮報的階段" });
+    gameState.phase = "PARASITE";
     res.json({ success: true, gameState });
   });
 });
@@ -345,7 +357,8 @@ app.post("/api/admin/open-report", async (req, res) => {
 app.post("/api/admin/resolve-report", async (req, res) => {
   withStateLock(req, res, () => {
     const reportedCounts: Record<string, number> = {};
-    gameState.teams.forEach(t => {
+   const teamsSnapshot = [...gameState.teams];
+   teamsSnapshot.forEach(t => {
        if (t.reportedTargetId && t.reportedTargetId !== "NONE") {
           reportedCounts[t.reportedTargetId] = (reportedCounts[t.reportedTargetId] || 0) + 1;
        }
@@ -353,7 +366,7 @@ app.post("/api/admin/resolve-report", async (req, res) => {
 
     const getBaseSalary = (t: Team) => t.realJob ? (t.workHours * t.wageRate) : 0;
 
-    gameState.teams.forEach(team => {
+   teamsSnapshot.forEach(team => {
        const wasReported = (reportedCounts[team.id] || 0) > 0;
        const myBaseSalary = getBaseSalary(team);
        let activeMsg = "";
@@ -397,11 +410,13 @@ app.post("/api/admin/resolve-report", async (req, res) => {
         activeMsg = "您沒有檢舉任何人，與世無爭";
        }
        updateVictory(team, true);
-        updateRank(gameState);
 
        // 寫入 DB，讓前端明天能看到
        team.reportResult = { message1: passiveMsg, message2: activeMsg };
     });
+
+    updateRank(gameState);
+
     if (gameState.currentDay < 4) {
       gameState.phase = "RESIGN";
     } else {

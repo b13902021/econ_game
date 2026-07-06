@@ -76,7 +76,7 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
       return <JobMarket currentTeam={currentTeam} gameState={gameState} fetchGameState={fetchGameState} setMessage={setMessage} />;
     }
 
-    if (gameState.phase === "EARN_AND_SPEND") {
+      if (gameState.phase === "EARN_AND_SPEND") {
       switch (currentTeam.actionProgress) {
          case "BEGINNING":
          case "JOBed":
@@ -93,6 +93,29 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
             return <WaitingPanel message="資料同步中..." theme={theme} />;
       }
     }
+
+      if (gameState.phase === "AP_ALLOCATION") {
+         if (currentTeam.actionProgress === "BEGINNING" || currentTeam.actionProgress === "JOBed") {
+            return <ApAllocation currentTeam={currentTeam} gameState={gameState} fetchGameState={fetchGameState} setMessage={setMessage} />;
+         }
+         if (currentTeam.actionProgress === "APed") {
+            return <WaitingPanel message="AP 已鎖定，等待管理員開放浮報階段..." theme={theme} />;
+         }
+         return <WaitingPanel message="資料同步中..." theme={theme} />;
+      }
+
+      if (gameState.phase === "PARASITE") {
+         if (currentTeam.actionProgress === "APed") {
+            return <Parasite currentTeam={currentTeam} gameState={gameState} fetchGameState={fetchGameState} setMessage={setMessage} />;
+         }
+         if (currentTeam.actionProgress === "PARASITED") {
+            return <Consumption currentTeam={currentTeam} gameState={gameState} fetchGameState={fetchGameState} setMessage={setMessage} />;
+         }
+         if (currentTeam.actionProgress === "CONSUMED") {
+            return <WaitingPanel message="今日行動已全部鎖定，等待管理員開放檢舉或換日..." theme={theme} />;
+         }
+         return <WaitingPanel message="等待管理員推進到浮報階段..." theme={theme} />;
+      }
 
     if (gameState.phase === "REPORT") {
       if (currentTeam.actionProgress === "REPORTED") return <WaitingPanel message="抉擇已鎖定，等待管理員進行全場結算..." theme={theme} />;
