@@ -241,6 +241,11 @@ app.post("/api/action/confirm-consumption", async (req, res) => {
     const { teamId, extraPeaches = 0 } = req.body;
     const team = gameState.teams.find(t => t.id === teamId);
     if (!team) return res.status(404).json({ error: "小隊不存在" });
+    if (team.actionProgress === "CONSUMED") return res.status(400).json({ error: "消費已鎖定" });
+    if (gameState.phase !== "EARN_AND_SPEND") return res.status(400).json({ error: "目前不是消費階段" });
+    if (team.actionProgress !== "APed" && team.actionProgress !== "PARASITED") {
+      return res.status(400).json({ error: "尚未完成消費前置流程" });
+    }
     
     const currentPrice = getCurrentPeachPrice();
     team.cash -= (5 + extraPeaches) * currentPrice; 

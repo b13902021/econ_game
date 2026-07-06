@@ -13,6 +13,7 @@ interface ConsumptionProps {
 export default function Consumption({ currentTeam, gameState, fetchGameState, setMessage }: ConsumptionProps) {
   // 狀態只記錄「額外多買」的水蜜桃數量，不能低於 0
   const [extraPeaches, setExtraPeaches] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ==========================================
   // 即時預覽計算
@@ -50,6 +51,9 @@ export default function Consumption({ currentTeam, gameState, fetchGameState, se
   };
 
   const handleConfirm = async () => {
+    if (isSubmitting || currentTeam.actionProgress === "CONSUMED") return;
+
+    setIsSubmitting(true);
     try {
       const res = await fetch("/api/action/confirm-consumption", { 
         method: "POST", 
@@ -66,6 +70,8 @@ export default function Consumption({ currentTeam, gameState, fetchGameState, se
       }
     } catch (err) {
       setMessage({ text: "連線失敗，請稍後再試", type: "error" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -114,8 +120,12 @@ export default function Consumption({ currentTeam, gameState, fetchGameState, se
       </div>
 
       <div className="pt-8 border-t-4 border-dashed border-black">
-        <button onClick={handleConfirm} className="w-full py-6 bg-black text-white text-xl font-black uppercase tracking-[0.2em] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
-          確認消費 ${totalCost}
+        <button
+          onClick={handleConfirm}
+          disabled={isSubmitting || currentTeam.actionProgress === "CONSUMED"}
+          className="w-full py-6 bg-black text-white text-xl font-black uppercase tracking-[0.2em] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:translate-x-0 disabled:hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+        >
+          {isSubmitting ? "提交中..." : currentTeam.actionProgress === "CONSUMED" ? "消費已鎖定" : `確認消費 $${totalCost}`}
         </button>
       </div>
     </section>
