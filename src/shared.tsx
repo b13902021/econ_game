@@ -39,6 +39,7 @@ export interface GameState {
   phase: "JOB_HUNTING" | "EARN_AND_SPEND" | "AP_ALLOCATION" | "PARASITE" | "REPORT" | "RESIGN" | "SLAUGHTER" | "ENDING";
   bailoutPool: number; 
   bailoutRequirement: number;
+  lastSlaughterVictimName: string | null;
   teams: Team[]; 
   jobApplications: Record<string, string[]>;
   peachPrice: number;

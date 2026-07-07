@@ -245,7 +245,7 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
                        <div className="grid grid-cols-3 gap-8">
                           <div>
                              <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">持有現金</div>
-                             <div className="text-2xl font-black tracking-tighter text-white-400">${currentTeam.cash}</div>
+                             <div className="text-2xl font-black tracking-tighter text-white-400">${currentTeam.cash.toFixed(2)}</div>
                           </div>
                           <div>
                              <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">額外消費</div>

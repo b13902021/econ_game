@@ -313,9 +313,20 @@ app.post("/api/admin/execute-slaughter", async (req, res) => {
       const potentialVictims = rankedTeams.filter(t => t.publicRank !== lastPlaceRank);
       const victim = potentialVictims[Math.floor(Math.random() * potentialVictims.length)];
       victim.isDead = true;
+      gameState.lastSlaughterVictimName = victim.name;
       res.json({ success: true, victimName: victim.name });
     }
     else{
+      const rankedTeams = getRankedTeams(gameState);
+      const lastPlaceRank = rankedTeams.at(-1)?.publicRank;
+      const slaughterers = rankedTeams.filter(t => t.publicRank === lastPlaceRank);
+      const payout = slaughterers.length > 0 ? gameState.bailoutPool / slaughterers.length : 0;
+
+      slaughterers.forEach((team) => {
+        team.cash += payout;
+      });
+
+      gameState.lastSlaughterVictimName = null;
       res.json({ success: true, victimName: null });
     }
     gameState.teams.forEach(team => updateVictory(team, true));

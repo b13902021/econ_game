@@ -15,6 +15,15 @@ export default function Ending({ currentTeam, gameState }: EndingProps) {
   // 判斷邏輯：是否屠殺成功？玩家是否死亡？
   const isBailoutFailed = pool < requirement;
   const isDead = currentTeam.isDead;
+  const rankedTeams = [...gameState.teams].sort((a, b) => {
+    if (a.isDead && !b.isDead) return 1;
+    if (!a.isDead && b.isDead) return -1;
+    return a.publicRank - b.publicRank;
+  });
+  const lastPlaceRank = rankedTeams.at(-1)?.publicRank;
+  const isMastermind = currentTeam.publicRank === lastPlaceRank;
+  const isBailoutProvider = !isBailoutFailed && currentTeam.publicRank === lastPlaceRank;
+  const victimName = gameState.lastSlaughterVictimName || "某支小隊";
 
   // 根據結局決定畫面主題與文字
   let statusTitle = "";
@@ -24,20 +33,27 @@ export default function Ending({ currentTeam, gameState }: EndingProps) {
 
   if (!isBailoutFailed) {
     // 結局 A：金庫達標，大家平安
-    statusTitle = "PEACE / 平安無事";
-    message = "最後一名獲得了足夠的補助，大家平安無事";
+    statusTitle = "PEACE / 平安日";
+    message = isBailoutProvider
+      ? "金庫達到標準，你獲得了足夠的補助，心滿意足，今晚沒有任何人被屠殺。"
+      : "金庫達到標準，你提供了足夠的補助，屠殺者心滿意足，今晚沒有任何人被屠殺。";
     containerTheme = "bg-emerald-400 border-black text-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]";
     rankTheme = "text-black drop-shadow-md";
   } else if (isBailoutFailed && !isDead) {
     // 結局 B：屠殺發動，但你活下來了 (沒死)
-    statusTitle = "SURVIVED / 倖存";
-    message = "最後一名鐵了心發動屠殺，而你逃過一劫";
+    if (isMastermind) {
+      statusTitle = "RABID / 理智斷線";
+      message = `金庫未達標，你的理智最終斷線，屠殺了 ${victimName}。`;
+    } else {
+      statusTitle = "SURVIVED / 倖存";
+      message = `金庫未達標，${victimName} 成了代罪羔羊，而你逃過一劫。`;
+    }
     containerTheme = "bg-white border-black text-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]";
     rankTheme = "text-black drop-shadow-md";
   } else {
     // 結局 C：屠殺發動，你被淘汰 (死了)
     statusTitle = "ELIMINATED / 淘汰";
-    message = "最後一名鐵了心，而命運的刀口落在了你的心臟";
+    message = `金庫未達標，${victimName} 的名字被寫進屠殺名單，而命運的刀口落在了你的心臟。`;
     containerTheme = "bg-red-950 border-red-600 text-red-500 shadow-[16px_16px_0px_0px_rgba(220,38,38,0.2)]";
     rankTheme = "text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)]";
   }
@@ -66,7 +82,7 @@ export default function Ending({ currentTeam, gameState }: EndingProps) {
         {/* ========================================== */}
         <div className="space-y-2">
           <div className="text-sm font-black uppercase tracking-[0.4em] opacity-70">
-            Final Rank / 最終階級名次
+            {isBailoutFailed ? "Final Judgment / 最終審判" : "Final Rank / 最終階級名次"}
           </div>
           
           <div className={cn("font-black tracking-tighter leading-none py-4", rankTheme, isDead ? "text-8xl md:text-[12rem]" : "text-8xl md:text-[12rem]") }>

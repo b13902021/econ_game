@@ -60,6 +60,10 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
          </div>
       </div>
 
+         <div className="border-4 p-4 font-black uppercase tracking-widest text-center bg-zinc-950 text-zinc-100 border-zinc-700">
+            金庫資訊保密中，僅顯示目標金額。管理員將在最後按下結算屠殺時統一判定。
+         </div>
+
       <div className="bg-black text-white p-8 border-4 border-black space-y-8">
 
           {currentTeam.reportResult && (
@@ -70,25 +74,13 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
              </div>
           )}
           
-          {/* 金庫資訊顯示區塊：根據 isLastPlace 判斷要顯示什麼 */}
+          {/* 金庫資訊顯示區塊：所有人只看到目標金額 */}
           <div className="text-center space-y-2">
-             {isLastPlace ? (
-                <>
-                   <div className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Bailout Pool / 目前總金庫餘額</div>
-                   <div className="text-7xl font-black tracking-tighter text-white">
-                       ${gameState.bailoutPool}
-                   </div>
-                   <div className="text-sm font-bold text-white/50 uppercase tracking-widest">目標金額: ${gameState.bailoutRequirement}</div>
-                </>
-             ) : (
-                <>
-                   <div className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Bailout Target / 總金庫目標金額</div>
-                   <div className="text-7xl font-black tracking-tighter text-white">
-                       ${gameState.bailoutRequirement}
-                   </div>
-                   <div className="text-sm font-bold text-white/50 uppercase tracking-widest">（您無權限查看目前餘額）</div>
-                </>
-             )}
+             <div className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Bailout Target / 總金庫目標金額</div>
+             <div className="text-7xl font-black tracking-tighter text-white">
+                 ${gameState.bailoutRequirement}
+             </div>
+             <div className="text-sm font-bold text-white/50 uppercase tracking-widest">（目前總捐獻將於結算屠殺時揭曉）</div>
           </div>
 
           {/* 捐獻區塊 */}
@@ -96,8 +88,8 @@ export default function Slaughter({ currentTeam, gameState, fetchGameState, setM
              <div className="bg-zinc-900 p-6 border border-zinc-700">
                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">Action Locked / 行動鎖定</div>
                 <div className="flex flex-col items-center justify-center bg-black border-2 border-dashed border-slate-700 py-10 px-4 text-center opacity-80">
-                   <div className="text-2xl font-black text-slate-500 uppercase tracking-widest">您是本次屠殺的主謀</div>
-                   <div className="text-sm font-bold text-slate-600 mt-2">請靜候其他小隊的援助與命運的審判。</div>
+                   <div className="text-2xl font-black text-slate-500 uppercase tracking-widest">您無需捐獻</div>
+                   <div className="text-sm font-bold text-slate-600 mt-2">請等待管理員最後按下結算屠殺。您將在那一刻知道結果。</div>
                 </div>
              </div>
           ) : (

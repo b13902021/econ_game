@@ -49,6 +49,7 @@ export interface GameState {
   teams: Team[];
   bailoutPool: number;
   bailoutRequirement: number;
+  lastSlaughterVictimName: string | null;
   jobApplications: Record<string, string[]>;
   peachPrice: number;
 }
@@ -77,6 +78,7 @@ export function getInitialState(): GameState {
     phase: "EARN_AND_SPEND",
     bailoutPool: 0, 
     bailoutRequirement: 0,
+    lastSlaughterVictimName: null,
     teams: [], 
     jobApplications: {},
     peachPrice: PEACH_PRICE_TABLE[1] || 120,
