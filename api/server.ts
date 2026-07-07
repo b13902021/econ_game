@@ -27,6 +27,35 @@ app.use(cookieParser());
 
 const getCurrentPeachPrice = () => PEACH_PRICE_TABLE[gameState.currentDay] || 120;
 
+const toPublicTeam = (team: Team): Team => ({
+  id: team.id,
+  name: team.name,
+  isRenamed: team.isRenamed,
+  pin: "",
+  publicRank: team.publicRank,
+  previousRank: team.previousRank,
+  realVictory: 0,
+  publicVictory: team.publicVictory,
+  previousVictory: team.previousVictory,
+  realJob: null,
+  publicJob: team.publicJob,
+  cash: 0,
+  alpha: team.alpha,
+  happiness: 0,
+  totalRestHours: 0,
+  totalExtraPeaches: 0,
+  wageRate: 0,
+  slaughterDonation: 0,
+  actionProgress: team.actionProgress,
+  todayRest: 0,
+  workHours: 0,
+  licenseProgress: {},
+  greedAmount: 0,
+  reportedTargetId: null,
+  reportResult: null,
+  isDead: team.isDead,
+});
+
 const recalculateWageRates = () => {
   const jobCounts: Record<string, number> = {};
 
@@ -82,18 +111,26 @@ app.get("/api/game-state", async (req, res) => {
       res.json({ ...gameState, peachPrice: gameState.peachPrice });
       return;
     }
-    
-    // 玩家視角：過濾掉其他小隊的私有資訊
-    const maskedTeams = gameState.teams.map(t => {
-      if (t.id === teamId) return { ...t };
-      return {
-        id: t.id, name: t.name, 
-        publicJob: t.publicJob, publicVictory: t.publicVictory,
-        publicRank: t.publicRank, previousRank: t.previousRank, previousVictory: t.previousVictory, 
-        alpha: t.alpha, isDead: t.isDead
-      } as any; //其他小隊的資訊
+
+    const currentTeam = gameState.teams.find((team) => team.id === teamId) || null;
+    const publicTeams = gameState.teams.map((team) => {
+      if (team.id === teamId) {
+        return toPublicTeam(team);
+      }
+      return toPublicTeam(team);
     });
-    res.json({ ...gameState, peachPrice: gameState.peachPrice, teams: maskedTeams });
+
+    res.json({
+      currentDay: gameState.currentDay,
+      phase: gameState.phase,
+      bailoutRequirement: gameState.bailoutRequirement,
+      lastSlaughterVictimName: gameState.lastSlaughterVictimName,
+      lastSlaughterOutcome: gameState.lastSlaughterOutcome,
+      teams: publicTeams,
+      jobApplications: {},
+      peachPrice: gameState.peachPrice,
+      currentTeam: currentTeam ? { ...currentTeam } : null,
+    });
   });
 });
 
@@ -314,6 +351,7 @@ app.post("/api/admin/execute-slaughter", async (req, res) => {
       const victim = potentialVictims[Math.floor(Math.random() * potentialVictims.length)];
       victim.isDead = true;
       gameState.lastSlaughterVictimName = victim.name;
+      gameState.lastSlaughterOutcome = "FAILED";
       res.json({ success: true, victimName: victim.name });
     }
     else{
@@ -327,6 +365,7 @@ app.post("/api/admin/execute-slaughter", async (req, res) => {
       });
 
       gameState.lastSlaughterVictimName = null;
+      gameState.lastSlaughterOutcome = "SUCCEEDED";
       res.json({ success: true, victimName: null });
     }
     gameState.teams.forEach(team => updateVictory(team, true));

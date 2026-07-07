@@ -8,7 +8,7 @@ import { cn } from "./lib/utils";
 import Dashboard from "./views/Dashboard";
 import AdminPanel from "./views/AdminPanel";
 // 引入共用的型別 (見下方注意事項)
-import { GameState } from "./shared"; 
+import { GameState, Team } from "./shared"; 
 
 type Role = "team" | "admin" | null;
 
@@ -16,11 +16,25 @@ export default function App() {
   const [role, setRole] = useState<Role>(null);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [viewerTeam, setViewerTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [isPageVisible, setIsPageVisible] = useState(() => typeof document !== "undefined" ? document.visibilityState !== "hidden" : true);
 
   const [loginName, setLoginName] = useState("");
   const [loginPin, setLoginPin] = useState("");
+
+  type PlayerGameStateResponse = {
+    currentDay: number;
+    phase: GameState["phase"];
+    bailoutRequirement: number;
+    lastSlaughterVictimName: string | null;
+    lastSlaughterOutcome: GameState["lastSlaughterOutcome"];
+    teams: Team[];
+    jobApplications: Record<string, string[]>;
+    peachPrice: number;
+    currentTeam: Team | null;
+  };
 
   // ==========================================
   // 全域狀態獲取與輪詢 (Polling)
@@ -34,21 +48,47 @@ export default function App() {
       const res = await fetch(url);
       if (res.ok) {
          const data = await res.json();
-         setGameState(data);
+         if (role === "team") {
+            const playerData = data as PlayerGameStateResponse;
+            setViewerTeam(playerData.currentTeam);
+            setGameState({
+              currentDay: playerData.currentDay,
+              phase: playerData.phase,
+              bailoutPool: 0,
+              bailoutRequirement: playerData.bailoutRequirement,
+              lastSlaughterVictimName: playerData.lastSlaughterVictimName,
+              lastSlaughterOutcome: playerData.lastSlaughterOutcome,
+              teams: playerData.teams,
+              jobApplications: playerData.jobApplications || {},
+              peachPrice: playerData.peachPrice,
+            });
+         } else {
+            setGameState(data);
+         }
       }
     } catch (err) { 
       console.error("狀態更新失敗", err); 
     }
   };
 
-  // 只有在登入後，才開始每 3 秒跟伺服器要一次最新資料
   useEffect(() => {
-    if (role) {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(document.visibilityState !== "hidden");
+    };
+
+    handleVisibilityChange();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // 只有在登入且頁面可見時，才定期跟伺服器要一次最新資料
+  useEffect(() => {
+    if (role && isPageVisible) {
         fetchGameState();
-        const interval = setInterval(fetchGameState, 3000);
+        const interval = setInterval(fetchGameState, 8000);
         return () => clearInterval(interval);
     }
-  }, [role, teamId]);
+  }, [role, teamId, isPageVisible]);
 
   // ==========================================
   // 登入與登出處理
@@ -66,6 +106,7 @@ export default function App() {
       if (res.ok) {
         setRole(data.role); 
         setTeamId(data.teamId || null); 
+        setViewerTeam(null);
         setMessage(null);
       } else {
         setMessage({ text: data.error, type: "error" });
@@ -81,6 +122,7 @@ export default function App() {
      setRole(null);
      setTeamId(null);
      setGameState(null);
+    setViewerTeam(null);
      setMessage(null);
      setLoginName("");
      setLoginPin("");
@@ -124,8 +166,8 @@ export default function App() {
     );
   }
 
-  // 2. 登入後，等待狀態從伺服器載入
-  if (!gameState) {
+    // 2. 登入後，等待狀態從伺服器載入
+    if (!gameState || (role === "team" && !viewerTeam)) {
      return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-2xl font-black uppercase tracking-widest animate-pulse">載入中 / Synchronizing Data...</div>;
   }
 
@@ -143,8 +185,8 @@ export default function App() {
   }
 
   // 4. 已登入：玩家小隊主控台
-  const currentTeam = gameState.teams.find(t => t.id === teamId);
-  if (role === "team" && currentTeam) {
+    const currentTeam = viewerTeam;
+    if (role === "team" && currentTeam) {
      return (
         <Dashboard 
            currentTeam={currentTeam} 
