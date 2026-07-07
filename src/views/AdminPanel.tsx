@@ -209,11 +209,11 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
                        </td>
                        <td className="p-4 font-bold text-center border-r-2 border-black">{getJobLabel(team)}</td>
                        <td className="p-4 font-bold text-center border-r-2 border-black text-xs text-slate-500">{team.actionProgress}</td>
-                       <td className="p-4 font-black text-center border-r-2 border-black">{team.realVictory.toFixed(2)}</td>
-                       <td className="p-4 font-black text-center border-r-2 border-black">${team.cash}</td>
-                       <td className="p-4 font-black text-center border-r-2 border-black">{team.happiness.toFixed(2)}</td>
-                       <td className="p-4 font-black text-center border-r-2 border-black">{team.todayRest}</td>
-                       <td className="p-4 font-black text-center border-r-2 border-black">{team.totalRestHours}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{(team.realVictory || 0).toFixed(2)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">${(team.cash || 0).toFixed(0)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{(team.happiness || 0).toFixed(2)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{(team.todayRest || 0).toFixed(0)}</td>
+                       <td className="p-4 font-black text-center border-r-2 border-black">{(team.totalRestHours || 0).toFixed(0)}</td>
                        <td className="p-4 font-black text-center border-r-2 border-black">{getConsumptionLabel(team)}</td>
                        <td className="p-4 font-black text-center border-r-2 border-black">{getReportLabel(team)}</td>
                        <td className="p-4 font-black text-center border-r-2 border-black">{team.reportedTargetId || "--"}</td>

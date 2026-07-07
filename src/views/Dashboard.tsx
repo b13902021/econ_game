@@ -1,5 +1,5 @@
 // src/views/Dashboard.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, ArrowUpRight, AlertCircle, XCircle } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Team, GameState, JOB_CONFIG, SALARY_TABLE, IMAGE_MAP } from "../shared";
@@ -245,15 +245,15 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
                        <div className="grid grid-cols-3 gap-8">
                           <div>
                              <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">持有現金</div>
-                             <div className="text-2xl font-black tracking-tighter text-white-400">${currentTeam.cash.toFixed(2)}</div>
+                             <div className="text-2xl font-black tracking-tighter text-white-400">${(currentTeam.cash || 0).toFixed(0)}</div>
                           </div>
                           <div>
                              <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">額外消費</div>
-                             <div className="text-2xl font-black tracking-tighter text-white-400">{currentTeam.totalExtraPeaches}<span className="text-lg">顆</span></div>
+                             <div className="text-2xl font-black tracking-tighter text-white-400">{(currentTeam.totalExtraPeaches || 0).toFixed(0)}<span className="text-lg">顆</span></div>
                           </div>
                           <div>
                              <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">累積休息</div>
-                             <div className="text-2xl font-black tracking-tighter text-white-400">{currentTeam.totalRestHours}<span className="text-lg">H</span></div>
+                             <div className="text-2xl font-black tracking-tighter text-white-400">{(currentTeam.totalRestHours || 0).toFixed(0)}<span className="text-lg">H</span></div>
                           </div>
                        </div>
                        <div className="grid grid-cols-2 gap-8">
@@ -326,7 +326,13 @@ function WaitingPanel({ message, theme }: { message: string; theme?: { bg: strin
 
 // 🌪️ 暴風雨
 function RainstormEffect() {
-  const drops = Array.from({ length: 80 });
+   const drops = useMemo(() => {
+      return Array.from({ length: 80 }, () => ({
+         left: `${Math.random() * 120 - 10}%`,
+         animationDelay: `${Math.random() * 2}s`,
+         animationDuration: `${Math.random() * 0.4 + 0.3}s`,
+      }));
+   }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden mix-blend-difference opacity-50">
@@ -357,15 +363,15 @@ function RainstormEffect() {
         }
       `}</style>
       
-      {drops.map((_, i) => (
+         {drops.map((drop, i) => (
           <div
             key={i}
             className="rain-drop"
             style={{
-              left: `${Math.random() * 120 - 10}%`,
+                     left: drop.left,
               top: `-150px`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${Math.random() * 0.4 + 0.3}s`,
+                     animationDelay: drop.animationDelay,
+                     animationDuration: drop.animationDuration,
             }}
           />
       ))}
