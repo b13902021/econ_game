@@ -50,6 +50,7 @@ export interface GameState {
   bailoutPool: number;
   bailoutRequirement: number;
   lastSlaughterVictimName: string | null;
+  lastSlaughterOutcome: "FAILED" | "SUCCEEDED" | null;
   jobApplications: Record<string, string[]>;
   peachPrice: number;
 }
@@ -79,6 +80,7 @@ export function getInitialState(): GameState {
     bailoutPool: 0, 
     bailoutRequirement: 0,
     lastSlaughterVictimName: null,
+    lastSlaughterOutcome: null,
     teams: [], 
     jobApplications: {},
     peachPrice: PEACH_PRICE_TABLE[1] || 120,

@@ -40,6 +40,7 @@ export interface GameState {
   bailoutPool: number; 
   bailoutRequirement: number;
   lastSlaughterVictimName: string | null;
+  lastSlaughterOutcome: "FAILED" | "SUCCEEDED" | null;
   teams: Team[]; 
   jobApplications: Record<string, string[]>;
   peachPrice: number;

@@ -8,12 +8,8 @@ interface EndingProps {
 }
 
 export default function Ending({ currentTeam, gameState }: EndingProps) {
-  // 取得目標金額與目前金庫金額
-  const requirement = gameState.bailoutRequirement || 1000;
-  const pool = gameState.bailoutPool || 0;
-  
-  // 判斷邏輯：是否屠殺成功？玩家是否死亡？
-  const isBailoutFailed = pool < requirement;
+  // 直接依後端結算結果判斷，不再依賴金庫明細
+  const isBailoutFailed = gameState.lastSlaughterOutcome === "FAILED";
   const isDead = currentTeam.isDead;
   const rankedTeams = [...gameState.teams].sort((a, b) => {
     if (a.isDead && !b.isDead) return 1;
@@ -31,7 +27,7 @@ export default function Ending({ currentTeam, gameState }: EndingProps) {
   let containerTheme = "";
   let rankTheme = "";
 
-  if (!isBailoutFailed) {
+  if (gameState.lastSlaughterOutcome === "SUCCEEDED") {
     // 結局 A：金庫達標，大家平安
     statusTitle = "PEACE / 平安日";
     message = isBailoutProvider
