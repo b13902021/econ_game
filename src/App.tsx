@@ -85,7 +85,7 @@ export default function App() {
   useEffect(() => {
     if (role && isPageVisible) {
         fetchGameState();
-        const interval = setInterval(fetchGameState, 3000);
+        const interval = setInterval(fetchGameState, 5000);
         return () => clearInterval(interval);
     }
   }, [role, teamId, isPageVisible]);
