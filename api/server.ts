@@ -484,6 +484,10 @@ app.post("/api/admin/resolve-report", async (req, res) => {
 app.post("/api/admin/next-day", async (req, res) => {
   withStateLock(req, res, () => {
     if (gameState.currentDay >= 4) return res.status(400).json({ error: "遊戲已結束" });
+    // 💡 加上這段：嚴格檢查是否允許換日 (只允許在 RESIGN 階段，或第一天的 EARN_AND_SPEND 階段)
+    if (gameState.phase !== "RESIGN" && !(gameState.currentDay === 1 && gameState.phase === "EARN_AND_SPEND")) {
+      return res.status(400).json({ error: "當前階段無法執行換日，可能已經由其他管理員執行過了！" });
+    }
     gameState.teams.forEach(team => {
       team.workHours = 0;
       team.wageRate = 0;

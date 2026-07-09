@@ -10,10 +10,12 @@ interface AdminPanelProps {
 
 export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProps) {
   const [message, setMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleAction = async (url: string | null, confirmText: string) => {
     if(!url) return;
     if (!confirm(confirmText)) return;
+    setIsProcessing(true);
     try {
       const res = await fetch(url, { method: "POST" });
       const data = await res.json();
@@ -25,6 +27,9 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
       }
     } catch (err) {
       setMessage({ text: "連線失敗，請檢查伺服器狀態", type: "error" });
+    } finally {
+      // 💡 處理結束：解鎖按鈕
+      setIsProcessing(false); 
     }
   };
 
@@ -157,8 +162,7 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
            <button 
              onClick={() => handleAction(nextPhase.url, nextPhase.confirm)}
              className="w-full py-8 bg-purple-600 text-white font-black text-2xl uppercase tracking-widest border-4 border-black hover:bg-purple-700 hover:translate-y-[2px] hover:translate-x-[2px] transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
-           >
-             {nextPhase.title} ➔
+           > {isProcessing ? "處理中..." : `${nextPhase.title} ➔`}
            </button>
         </div>
 
@@ -167,7 +171,7 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
            <p className="text-sm font-bold text-red-500">此區操作將不可逆轉地改變遊戲狀態。</p>
            
            <button 
-             onClick={() => handleAction("/api/admin/reset", "【極度危險】確定要重置整個遊戲嗎？所有隊伍資料與進度將被徹底清空！")}
+             onClick={() => handleAction("/api/admin/reset", "確定要重置整個遊戲嗎？所有隊伍資料與進度將被徹底清空！")}
              className="w-full py-4 bg-white text-red-600 font-black text-lg border-4 border-red-600 hover:bg-red-100 transition-all shadow-[4px_4px_0px_0px_rgba(220,38,38,1)] active:shadow-none"
            >
              重置遊戲 (Reset)
