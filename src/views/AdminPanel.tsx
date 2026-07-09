@@ -1,6 +1,6 @@
 // src/views/AdminPanel.tsx
 import { useState } from "react";
-import { GameState, Team, JOB_CONFIG } from "../shared";
+import { GameState, Team, JOB_CONFIG, SALARY_TABLE } from "../shared";
 import { cn } from "../lib/utils";
 
 interface AdminPanelProps {
@@ -258,13 +258,9 @@ export default function AdminPanel({ gameState, fetchGameState }: AdminPanelProp
                          return `${t.name} (${progress}/${jobInfo.apCost})`;
                        }
                      });
-                   const SALARY_TABLE: Record<string, number[]> = {
-                     GARDENER: [190, 180, 160, 130, 100, 70, 70, 70, 70, 70],
-                     BUTLER: [220, 200, 170, 130, 90, 50, 50, 50, 50, 50],
-                     DRIVER: [260, 230, 190, 140, 90, 40, 40, 40, 40, 40],
-                     TUTOR: [320, 270, 210, 140, 80, 20, 20, 20, 20, 20],
-                   };
-                   const currentSalary = SALARY_TABLE[jobCode]?.[gameState.currentDay - 1] || 0;
+
+                     const count = employed.length > 0 ? employed.length : 1;
+                     const currentSalary = SALARY_TABLE[jobCode]?.[Math.min(count - 1, 9)] || 0;
                    
                    return (
                      <tr key={jobCode} className="border-b border-slate-200 hover:bg-blue-50">
