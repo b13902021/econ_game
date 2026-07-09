@@ -113,12 +113,7 @@ app.get("/api/game-state", async (req, res) => {
     }
 
     const currentTeam = gameState.teams.find((team) => team.id === teamId) || null;
-    const publicTeams = gameState.teams.map((team) => {
-      if (team.id === teamId) {
-        return toPublicTeam(team);
-      }
-      return toPublicTeam(team);
-    });
+    const publicTeams = gameState.teams.map((team) => (team.id === teamId ? toPublicTeam(team) : toPublicTeam(team)));
 
     res.json({
       currentDay: gameState.currentDay,
