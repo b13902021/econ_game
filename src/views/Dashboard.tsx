@@ -153,7 +153,7 @@ export default function Dashboard({ currentTeam, gameState, fetchGameState, setM
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 relative">
       {/* 🌪️ 暴風雨 */}
-      {gameState.currentDay >= 3 && <RainstormEffect />}
+      {gameState.currentDay == 3 && <RainstormEffect />}
       
       {/* 頂部導航狀態列 (Header) */}
       <header className={cn("text-white sticky top-0 z-50 transition-colors duration-500 shadow-lg", theme.bg)}>
