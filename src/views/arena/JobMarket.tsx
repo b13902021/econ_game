@@ -22,6 +22,7 @@ export default function JobMarket({ currentTeam, gameState, fetchGameState, setM
   const hasRealJob = currentTeam.realJob !== null;
 
   const handleApplyJob = async (jobId: string | null) => {
+    if(!confirm("確定提交嗎？提交後將無法更改職位選擇。")) return;
     try {
       const res = await fetch("/api/action/apply-job", {
         method: "POST",
