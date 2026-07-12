@@ -58,6 +58,12 @@ export default function Parasite({ currentTeam, gameState, fetchGameState, setMe
   const derivedVictory = currentTeam.alpha * derivedHappiness * derivedCash;
 
   const handleParasite = async (forceSkip: boolean = false) => {
+    if (forceSkip) {
+      if (!confirm("確定放棄浮報並進入下一步嗎？")) return;
+    } else {
+      if (!confirm(`確定提交浮報 $${Math.round(baseSalary * multiplier)} 嗎？提交後將進入結算。`)) return;
+    }
+
     try {
       const res = await fetch("/api/action/parasite", {
         method: "POST",
