@@ -196,6 +196,19 @@ export async function withStateLock(req: any, res: any, action: () => Promise<an
   }
 }
 
+export async function withStateRead(req: any, res: any, action: () => Promise<any> | any) {
+  const release = await stateLock.acquire();
+  try {
+    await loadStateFromDB();
+    await action();
+  } catch (error: any) {
+    console.error(`🔥 [API 錯誤] 路徑: ${req.path} | 錯誤內容:`, error);
+    res.status(500).json({ error: "伺服器處理錯誤" });
+  } finally {
+    release();
+  }
+}
+
 // ==========================================
 // 3. 遊戲邏輯輔助函式
 // ==========================================
