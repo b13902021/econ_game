@@ -52,7 +52,7 @@ export default function Consumption({ currentTeam, gameState, fetchGameState, se
 
   const handleConfirm = async () => {
     if (isSubmitting || currentTeam.actionProgress === "CONSUMED") return;
-
+    if(!confirm(""確定提交嗎？提交後將無法更改消費數量。")) return;
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/action/confirm-consumption", { 
