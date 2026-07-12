@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import {
   gameState,
   withStateLock,
+  withStateRead,
   updateHappiness,
   updateVictory,
   updateRank,
@@ -80,7 +81,7 @@ const recalculateWageRates = () => {
 // 1. 系統與登入
 // ==========================================
 app.post("/api/login", async (req, res) => {
-  withStateLock(req, res, () => {
+  withStateRead(req, res, () => {
     const { name, pin } = req.body;
     const team = gameState.teams.find((t) => t.name === name && t.pin === pin);
     if (name === "ADMIN" && (pin === process.env.ADMIN_PIN || pin === "NTUECON")) {
@@ -96,7 +97,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.get("/api/game-state", async (req, res) => {
-  withStateLock(req, res, () => {
+  withStateRead(req, res, () => {
     const { teamId, isAdmin } = req.query;
     
     gameState.peachPrice = getCurrentPeachPrice();
