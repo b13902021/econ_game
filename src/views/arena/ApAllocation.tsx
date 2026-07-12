@@ -99,6 +99,8 @@ export default function ApAllocation({ currentTeam, gameState, fetchGameState, s
         
         return;
      }
+     if(!confirm("確定提交嗎"))
+      return;
      try {
        const res = await fetch("/api/action/submit-ap", { 
            method: "POST", 
