@@ -20,7 +20,7 @@ export default function Resign({ currentTeam, gameState, fetchGameState, setMess
         return;
     }
 
-    if (!currentTeam.realJob){
+    if (currentTeam.realJob){
       if(!confirm(isToQuit ? "確定放棄職位嗎" : "確定保留職位嗎")) return;
     }
     
